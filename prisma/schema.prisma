@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Event {
+  id            String        @id @default(uuid())
+  title         String
+  description   String?
+  imageUrl      String?
+  price         Int           @default(0)
+  currency      String        @default("MNT")
+  venue         String        @default("78MusicBar")
+  startsAt      DateTime
+  endsAt        DateTime?
+  isPublished   Boolean       @default(true)
+  isFeatured    Boolean       @default(false) 
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  HomeFeaturedEvent HomeFeaturedEvent[]
+
+  reservations  Reservation[]
+
+  @@index([startsAt])
+  @@index([isFeatured])
+}
+
+model HomeHero {
+  id          String   @id @default(uuid())
+  imageUrl    String
+  headline    String   @default("Эвентүүд, тав тухтай орчин")
+  subheadline String   @default("Ширээгээ урьдчилж захиалаарай.")
+  ctaText     String   @default("Эвентүүд үзэх")
+  ctaHref     String   @default("/events")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model HomeImage {
+  id        String   @id @default(uuid())
+  imageUrl  String
+  sort      Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sort])
+}
+model Reservation {
+  id          String   @id @default(uuid())
+
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  name        String?
+  phone       String?
+
+  userId      String?
+  userEmail   String?
+  userPhone   String?
+
+  guests      Int      @default(2)
+  reservedFor DateTime
+  tableNo     Int
+  note        String?
+  status      String   @default("new")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([eventId, reservedFor, tableNo])
+  @@index([eventId])
+  @@index([reservedFor])
+  @@index([userId])
+}
+enum MenuCategory {
+  drinks
+  food
+}
+
+model MenuImage {
+  id        String       @id @default(uuid())
+  category  MenuCategory
+  imageUrl  String
+  sort      Int          @default(0)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([category, sort])
+}
+
+model SitePage {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  title     String
+  body      String   @default("") 
+  imageUrl  String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+model HomeFeaturedEvent {
+  id        String   @id @default(uuid())
+
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  sort      Int      @default(0)
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId])
+  @@index([isActive, sort])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  userId      String?
+  userEmail   String?
+  displayName String
+  comment     String
+  rating      Int      @default(5)
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isApproved, createdAt])
+}
