@@ -96,6 +96,10 @@ export default function AdminReservationsPage() {
 
   useEffect(() => {
     load();
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 5000);
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -228,6 +232,9 @@ export default function AdminReservationsPage() {
               "Review • approve payment • cancel • delete • filter reservations",
               "Захиалга хянах • төлбөр батлах • цуцлах • устгах • шүүх",
             )}
+          </p>
+          <p className="mt-1 text-xs text-amber-100/60">
+            {tr(locale, "Realtime updates every 5 seconds", "5 секунд тутам realtime шинэчлэгдэнэ")}
           </p>
         </div>
 

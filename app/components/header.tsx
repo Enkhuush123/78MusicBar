@@ -198,6 +198,14 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
                 </SheetHeader>
 
                 <div className="mt-6 grid gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start border-amber-300/40 bg-transparent text-amber-100 hover:bg-amber-200/15"
+                    onClick={toggleLocale}
+                  >
+                    {tr(locale, "Language", "Хэл")}: {locale.toUpperCase()}
+                  </Button>
+
                   {nav.map((item) => (
                     <Button
                       key={item.href}

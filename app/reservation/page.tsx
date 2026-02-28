@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/app/components/use-locale";
 import { tr } from "@/lib/i18n";
 import { supabase as supabaseClient } from "@/lib/supabase/browser";
@@ -87,9 +87,20 @@ export default function ReservationRoot() {
   useEffect(() => {
     load();
     const { data: sub } = supabaseClient.auth.onAuthStateChange(() => load());
-    return () => sub.subscription.unsubscribe();
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 5000);
+    return () => {
+      clearInterval(timer);
+      sub.subscription.unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const confirmedRows = useMemo(
+    () => rows.filter((r) => r.status === "confirmed"),
+    [rows],
+  );
 
   return (
     <main className="mx-auto max-w-6xl px-4 pt-24 pb-16">
@@ -102,6 +113,9 @@ export default function ReservationRoot() {
             <h1 className="jazz-heading text-4xl text-amber-50">
               {tr(locale, "My Reservations", "Миний захиалгууд")}
             </h1>
+            <p className="mt-1 text-sm text-amber-100/70">
+              {tr(locale, "Realtime updates every 5 seconds", "5 секунд тутам realtime шинэчлэгдэнэ")}
+            </p>
           </div>
           <button
             onClick={load}
@@ -121,6 +135,21 @@ export default function ReservationRoot() {
 
         {msg ? <p className="mt-4 text-sm text-amber-100/80">{msg}</p> : null}
 
+        {confirmedRows.length > 0 && (
+          <div className="mt-5 rounded-2xl border border-emerald-300/40 bg-emerald-500/10 p-4">
+            <p className="text-sm font-semibold text-emerald-100">
+              {tr(locale, "Approved Reservations", "Баталгаажсан захиалгууд")}
+            </p>
+            <p className="mt-1 text-xs text-emerald-100/80">
+              {tr(
+                locale,
+                "Your payment is verified by admin. Your table is confirmed.",
+                "Таны төлбөрийг админ баталгаажуулсан. Таны ширээ баталгаатай.",
+              )}
+            </p>
+          </div>
+        )}
+
         <div className="mt-6 grid gap-3">
           {loading ? (
             <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-8 text-center text-amber-100/80">
@@ -137,7 +166,12 @@ export default function ReservationRoot() {
               return (
                 <article
                   key={r.id}
-                  className="rounded-2xl border border-amber-300/25 bg-black/20 p-4"
+                  className={cn(
+                    "rounded-2xl border bg-black/20 p-4",
+                    r.status === "confirmed"
+                      ? "border-emerald-300/45 shadow-[0_0_0_1px_rgba(110,231,183,0.2)]"
+                      : "border-amber-300/25",
+                  )}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-amber-50">
