@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { tr } from "@/lib/i18n";
 import { useLocale } from "@/app/components/use-locale";
 
-const cn = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
+const cn = (...s: (string | false | undefined)[]) =>
+  s.filter(Boolean).join(" ");
 
 type Hero = {
   id: string;
@@ -64,8 +65,12 @@ export default function AdminHomePage() {
     setMsg(null);
     const [h, g, f, ev] = await Promise.all([
       fetch("/api/admin/home", { cache: "no-store" }).then((r) => r.json()),
-      fetch("/api/admin/home/images", { cache: "no-store" }).then((r) => r.json()),
-      fetch("/api/admin/home/featured", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/admin/home/images", { cache: "no-store" }).then((r) =>
+        r.json(),
+      ),
+      fetch("/api/admin/home/featured", { cache: "no-store" }).then((r) =>
+        r.json(),
+      ),
       fetch("/api/admin/events", { cache: "no-store" })
         .then((r) => r.json())
         .then((d) => d.events ?? []),
@@ -102,7 +107,8 @@ export default function AdminHomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(hero),
       });
-      if (!res.ok) return setMsg(tr(locale, "Save failed", "Хадгалахад алдаа гарлаа"));
+      if (!res.ok)
+        return setMsg(tr(locale, "Save failed", "Хадгалахад алдаа гарлаа"));
       setMsg(tr(locale, "✅ Hero saved", "✅ Hero хадгалагдлаа"));
       await load();
     } finally {
@@ -128,7 +134,8 @@ export default function AdminHomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageUrl: up.url, sort: 0 }),
       });
-      if (!res.ok) return setMsg(tr(locale, "Create failed", "Үүсгэхэд алдаа гарлаа"));
+      if (!res.ok)
+        return setMsg(tr(locale, "Create failed", "Үүсгэхэд алдаа гарлаа"));
       await load();
     } catch {
       setMsg(tr(locale, "Upload error", "Зураг оруулахад алдаа гарлаа"));
@@ -169,7 +176,9 @@ export default function AdminHomePage() {
         body: JSON.stringify({ eventId: specialPick, sort: 0 }),
       });
 
-      setMsg(tr(locale, "✅ Special event updated", "✅ Онцлох эвент шинэчлэгдлээ"));
+      setMsg(
+        tr(locale, "✅ Special event updated", "✅ Онцлох эвент шинэчлэгдлээ"),
+      );
       await load();
     } finally {
       setSaving(false);
@@ -181,7 +190,11 @@ export default function AdminHomePage() {
     const used = featured.some((f) => f.eventId === upcomingPick);
     if (used)
       return setMsg(
-        tr(locale, "This event is already selected.", "Энэ эвент аль хэдийн сонгогдсон байна."),
+        tr(
+          locale,
+          "This event is already selected.",
+          "Энэ эвент аль хэдийн сонгогдсон байна.",
+        ),
       );
 
     setSaving(true);
@@ -193,7 +206,9 @@ export default function AdminHomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ eventId: upcomingPick, sort: nextSort }),
       });
-      setMsg(tr(locale, "✅ Upcoming event added", "✅ Удахгүй эвент нэмэгдлээ"));
+      setMsg(
+        tr(locale, "✅ Upcoming event added", "✅ Удахгүй эвент нэмэгдлээ"),
+      );
       await load();
     } finally {
       setSaving(false);
@@ -238,13 +253,19 @@ export default function AdminHomePage() {
   return (
     <section className="mx-auto max-w-5xl px-1 py-2">
       <div className="jazz-panel rounded-2xl p-6">
-        <p className="jazz-heading text-amber-200">{tr(locale, "Homepage", "Нүүр хуудас")}</p>
-        <h1 className="jazz-heading text-4xl text-amber-50">{tr(locale, "Admin Home", "Нүүр удирдлага")}</h1>
+        <p className="jazz-heading text-amber-200">
+          {tr(locale, "Homepage", "Нүүр хуудас")}
+        </p>
+        <h1 className="jazz-heading text-4xl text-amber-50">
+          {tr(locale, "Admin Home", "Нүүр удирдлага")}
+        </h1>
         {msg && <p className="mt-2 text-sm text-amber-100/80">{msg}</p>}
 
         <div className="mt-6 grid gap-5">
           <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
-            <p className="text-sm font-semibold text-amber-100">{tr(locale, "Special Event", "Онцлох эвент")}</p>
+            <p className="text-sm font-semibold text-amber-100">
+              {tr(locale, "Special Event", "Онцлох эвент")}
+            </p>
             <div className="mt-3 grid gap-2 md:grid-cols-[1fr_140px]">
               <select
                 className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
@@ -270,13 +291,19 @@ export default function AdminHomePage() {
               </p>
             ) : (
               <p className="mt-2 text-sm text-amber-100/70">
-                {tr(locale, "No special event selected.", "Онцлох эвент сонгоогүй байна.")}
+                {tr(
+                  locale,
+                  "No special event selected.",
+                  "Онцлох эвент сонгоогүй байна.",
+                )}
               </p>
             )}
           </div>
 
           <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
-            <p className="text-sm font-semibold text-amber-100">{tr(locale, "Upcoming Events", "Удахгүй эвентүүд")}</p>
+            <p className="text-sm font-semibold text-amber-100">
+              {tr(locale, "Upcoming Events", "Удахгүй эвентүүд")}
+            </p>
             <div className="mt-3 grid gap-2 md:grid-cols-[1fr_140px]">
               <select
                 className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
@@ -330,7 +357,11 @@ export default function AdminHomePage() {
               ))}
               {upcomingRows.length === 0 && (
                 <p className="text-sm text-amber-100/70">
-                  {tr(locale, "No upcoming events selected.", "Удахгүй эвент сонгоогүй байна.")}
+                  {tr(
+                    locale,
+                    "No upcoming events selected.",
+                    "Удахгүй эвент сонгоогүй байна.",
+                  )}
                 </p>
               )}
             </div>
@@ -341,7 +372,11 @@ export default function AdminHomePage() {
             <div className="mt-3 grid gap-4 md:grid-cols-[220px_1fr]">
               <div className="overflow-hidden rounded-xl border border-amber-300/25 bg-black/30">
                 {hero.imageUrl ? (
-                  <img src={hero.imageUrl} alt="hero" className="h-40 w-full object-cover" />
+                  <img
+                    src={hero.imageUrl}
+                    alt="hero"
+                    className="h-40 w-full object-cover"
+                  />
                 ) : (
                   <div className="grid h-40 place-items-center text-sm text-amber-100/70">
                     {tr(locale, "No image", "Зураг алга")}
@@ -353,26 +388,34 @@ export default function AdminHomePage() {
                 <input
                   className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
                   value={hero.headline}
-                  onChange={(e) => setHero({ ...hero, headline: e.target.value })}
+                  onChange={(e) =>
+                    setHero({ ...hero, headline: e.target.value })
+                  }
                   placeholder={tr(locale, "Headline", "Гарчиг")}
                 />
                 <input
                   className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
                   value={hero.subheadline}
-                  onChange={(e) => setHero({ ...hero, subheadline: e.target.value })}
+                  onChange={(e) =>
+                    setHero({ ...hero, subheadline: e.target.value })
+                  }
                   placeholder={tr(locale, "Subheadline", "Дэд гарчиг")}
                 />
                 <div className="grid gap-3 md:grid-cols-2">
                   <input
                     className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
                     value={hero.ctaText}
-                    onChange={(e) => setHero({ ...hero, ctaText: e.target.value })}
+                    onChange={(e) =>
+                      setHero({ ...hero, ctaText: e.target.value })
+                    }
                     placeholder={tr(locale, "CTA text", "CTA текст")}
                   />
                   <input
                     className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
                     value={hero.ctaHref}
-                    onChange={(e) => setHero({ ...hero, ctaHref: e.target.value })}
+                    onChange={(e) =>
+                      setHero({ ...hero, ctaHref: e.target.value })
+                    }
                     placeholder={tr(locale, "CTA href", "CTA холбоос")}
                   />
                 </div>
@@ -382,7 +425,9 @@ export default function AdminHomePage() {
                       className="mr-2"
                       type="checkbox"
                       checked={hero.isActive}
-                      onChange={(e) => setHero({ ...hero, isActive: e.target.checked })}
+                      onChange={(e) =>
+                        setHero({ ...hero, isActive: e.target.checked })
+                      }
                     />
                     {tr(locale, "Active", "Идэвхтэй")}
                   </label>
@@ -412,51 +457,6 @@ export default function AdminHomePage() {
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-amber-100">{tr(locale, "Gallery Images", "Галерей зураг")}</p>
-              <label className="inline-flex h-10 cursor-pointer items-center rounded-xl border border-amber-300/40 px-4 text-sm text-amber-50 hover:bg-amber-300/15">
-                {tr(locale, "+ Add image", "+ Зураг нэмэх")}
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) addGallery(f);
-                  }}
-                />
-              </label>
-            </div>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {imgs.map((it) => (
-                <div key={it.id} className="rounded-2xl border border-amber-300/25 p-3">
-                  <div className="h-40 overflow-hidden rounded-xl border border-amber-300/25 bg-black/30">
-                    <img src={it.imageUrl} alt="img" className="h-full w-full object-cover" />
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <label className="text-xs text-amber-100">
-                      <input
-                        className="mr-2"
-                        type="checkbox"
-                        checked={it.isActive}
-                        onChange={(e) => toggleActive(it.id, e.target.checked)}
-                      />
-                      {tr(locale, "Active", "Идэвхтэй")}
-                    </label>
-                    <button
-                      onClick={() => removeGallery(it.id)}
-                      className="rounded-lg border border-amber-300/40 px-3 py-1 text-xs text-amber-50"
-                    >
-                      {tr(locale, "Delete", "Устгах")}
-                    </button>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>

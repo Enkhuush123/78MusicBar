@@ -78,16 +78,18 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4">
         <div className="jazz-shell relative overflow-hidden rounded-3xl">
           <div className="h-[64vh] min-h-[520px]">
-            <img src={heroImg} alt="hero" className="h-full w-full object-cover" />
+            <img
+              src={heroImg}
+              alt="hero"
+              className="h-full w-full object-cover"
+            />
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/30" />
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-2xl p-8 md:p-12">
-              <p className="jazz-heading text-amber-200">
-                {tr(locale, "Ulaanbaatar Jazz Nights", "Улаанбаатарын Жазз Үдэш")}
-              </p>
               <h1 className="jazz-heading mt-3 text-5xl text-amber-50 md:text-7xl">
-                {hero?.headline || tr(locale, "Late Night Rhythm", "Шөнийн Хэмнэл")}
+                {hero?.headline ||
+                  tr(locale, "Late Night Rhythm", "Шөнийн Хэмнэл")}
               </h1>
               <p className="mt-4 text-xl text-amber-100/85">
                 {hero?.subheadline ||
@@ -130,10 +132,15 @@ export default async function HomePage() {
                   className="h-64 w-full object-cover"
                 />
               </div>
-              <h2 className="jazz-heading mt-5 text-4xl text-amber-100">{featured.title}</h2>
-              <p className="mt-2 text-amber-50/80">{formatDateTime(featured.startsAt)}</p>
+              <h2 className="jazz-heading mt-5 text-4xl text-amber-100">
+                {featured.title}
+              </h2>
+              <p className="mt-2 text-amber-50/80">
+                {formatDateTime(featured.startsAt)}
+              </p>
               <p className="text-amber-50/80">
-                {featured.price.toLocaleString()} {featured.currency} • {featured.venue}
+                {featured.price.toLocaleString()} {featured.currency} •{" "}
+                {featured.venue}
               </p>
               <Link
                 href={`/events/${featured.id}/reserve`}
@@ -144,7 +151,11 @@ export default async function HomePage() {
             </div>
           ) : (
             <p className="mt-3 text-amber-50/70">
-              {tr(locale, "No upcoming featured event yet.", "Одоогоор онцлох эвент алга.")}
+              {tr(
+                locale,
+                "No upcoming featured event yet.",
+                "Одоогоор онцлох эвент алга.",
+              )}
             </p>
           )}
         </div>
@@ -160,7 +171,10 @@ export default async function HomePage() {
               {tr(locale, "Live Schedule", "Хуваарь")}
             </h2>
           </div>
-          <Link href="/events" className="text-sm text-amber-100 underline underline-offset-4">
+          <Link
+            href="/events"
+            className="text-sm text-amber-100 underline underline-offset-4"
+          >
             {tr(locale, "All events", "Бүх эвент")}
           </Link>
         </div>
