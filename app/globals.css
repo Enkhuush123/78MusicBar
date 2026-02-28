@@ -126,6 +126,24 @@
       linear-gradient(180deg, #0f0c0a 0%, #17110d 100%);
     min-height: 100vh;
   }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  a[data-slot="button"] {
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  input:disabled,
+  a[aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 @layer utilities {
