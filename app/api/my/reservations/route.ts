@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getSupabaseUserFromRequest } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(req: Request) {
   let user = getSupabaseUserFromRequest(req);
 
@@ -42,7 +45,7 @@ export async function GET(req: Request) {
         ...(user?.email ? [{ userEmail: user.email }] : []),
       ],
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
     take: 100,
     select: {
       id: true,
@@ -66,5 +69,9 @@ export async function GET(req: Request) {
     },
   });
 
-  return Response.json(rows);
+  return Response.json(rows, {
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    },
+  });
 }

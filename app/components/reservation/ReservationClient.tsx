@@ -37,6 +37,7 @@ type PaymentTicket = {
   amount: number;
   currency: string;
   reference: string;
+  status: "pending_payment" | "confirmed" | "cancelled" | "rejected";
 };
 
 const BANK_ACCOUNT_NAME = "Гансүх Маралмаа";
@@ -323,6 +324,7 @@ export default function ReservationClient({
             amount: totalPrice,
             currency: eventCurrency,
             reference,
+            status: "pending_payment",
           });
         }
 
@@ -392,6 +394,39 @@ export default function ReservationClient({
     setPolicyOpen(false);
     await submitReservation();
   };
+
+  useEffect(() => {
+    if (!paymentTicket || !token) return;
+
+    let alive = true;
+    const tick = async () => {
+      const res = await fetch("/api/my/reservations", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      }).catch(() => null);
+      if (!alive || !res?.ok) return;
+      const rows = (await res.json()) as Array<{ id: string; status: string }>;
+      const match = rows.find((r) => r.id === paymentTicket.reservationId);
+      if (!match) return;
+      if (
+        match.status === "pending_payment" ||
+        match.status === "confirmed" ||
+        match.status === "cancelled" ||
+        match.status === "rejected"
+      ) {
+        setPaymentTicket((prev) =>
+          prev ? { ...prev, status: match.status as PaymentTicket["status"] } : prev,
+        );
+      }
+    };
+
+    tick();
+    const timer = setInterval(tick, 5000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [paymentTicket, token]);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-20">
@@ -648,13 +683,27 @@ export default function ReservationClient({
           {msg && <p className="mt-3 text-sm text-amber-100/80">{msg}</p>}
 
           {paymentTicket && (
-            <div className="mt-4 rounded-xl border border-emerald-300/30 bg-emerald-500/10 p-4 text-emerald-100">
+            <div
+              className={cn(
+                "mt-4 rounded-xl border p-4",
+                paymentTicket.status === "confirmed" &&
+                  "border-emerald-300/50 bg-emerald-500/15 text-emerald-100",
+                paymentTicket.status === "pending_payment" &&
+                  "border-amber-300/40 bg-amber-500/10 text-amber-100",
+                paymentTicket.status === "rejected" &&
+                  "border-red-300/50 bg-red-500/15 text-red-100",
+                paymentTicket.status === "cancelled" &&
+                  "border-neutral-300/40 bg-neutral-500/15 text-neutral-100",
+              )}
+            >
               <p className="text-sm font-semibold">
-                {tr(
-                  locale,
-                  "Payment Pending Approval",
-                  "Төлбөр шалгагдах хүлээлттэй",
-                )}
+                {paymentTicket.status === "confirmed"
+                  ? tr(locale, "Reservation Confirmed", "Захиалга баталгаажсан")
+                  : paymentTicket.status === "pending_payment"
+                    ? tr(locale, "Payment Pending Approval", "Төлбөр шалгагдах хүлээлттэй")
+                    : paymentTicket.status === "rejected"
+                      ? tr(locale, "Payment Rejected", "Төлбөр татгалзсан")
+                      : tr(locale, "Reservation Cancelled", "Захиалга цуцлагдсан")}
               </p>
               <div className="mt-2 space-y-1 text-xs">
                 <p>
@@ -681,12 +730,30 @@ export default function ReservationClient({
                   <span className="font-semibold">{paymentTicket.reference}</span>
                 </p>
               </div>
-              <p className="mt-3 text-xs text-emerald-100/90">
-                {tr(
-                  locale,
-                  "After transfer, admin checks your payment and approves your reservation.",
-                  "Төлбөр шилжүүлсний дараа админ шалгаад таны захиалгыг баталгаажуулна.",
-                )}
+              <p className="mt-3 text-xs">
+                {paymentTicket.status === "confirmed"
+                  ? tr(
+                      locale,
+                      "Admin approved your payment. Your reservation is active.",
+                      "Админ таны төлбөрийг баталгаажууллаа. Таны захиалга идэвхтэй.",
+                    )
+                  : paymentTicket.status === "pending_payment"
+                    ? tr(
+                        locale,
+                        "After transfer, admin checks your payment and approves your reservation.",
+                        "Төлбөр шилжүүлсний дараа админ шалгаад таны захиалгыг баталгаажуулна.",
+                      )
+                    : paymentTicket.status === "rejected"
+                      ? tr(
+                          locale,
+                          "Payment was rejected by admin. Please contact support.",
+                          "Төлбөрийг админ татгалзсан байна. Холбогдоно уу.",
+                        )
+                      : tr(
+                          locale,
+                          "Reservation was cancelled by admin.",
+                          "Захиалгыг админ цуцалсан байна.",
+                        )}
               </p>
             </div>
           )}
