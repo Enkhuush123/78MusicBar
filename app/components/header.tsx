@@ -55,6 +55,20 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const loadAdminRole = async (active: boolean) => {
+    if (!active) {
+      setIsAdmin(false);
+      return;
+    }
+    const res = await fetch("/api/me/admin", { cache: "no-store" }).catch(
+      () => null,
+    );
+    if (!res?.ok) return setIsAdmin(false);
+    const data = (await res.json()) as { isAdmin?: boolean };
+    setIsAdmin(!!data?.isAdmin);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -63,9 +77,11 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
 
       setLoggedIn(!!user);
       setUserEmail(user?.email ?? null);
+      setIsAdmin(false);
 
       const meta: any = user?.user_metadata ?? {};
       setAvatarUrl(meta?.avatar_url ?? null);
+      await loadAdminRole(!!user);
     };
 
     load();
@@ -76,9 +92,11 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
 
         setLoggedIn(!!user);
         setUserEmail(user?.email ?? null);
+        setIsAdmin(false);
 
         const meta: any = user?.user_metadata ?? {};
         setAvatarUrl(meta?.avatar_url ?? null);
+        void loadAdminRole(!!user);
       },
     );
 
@@ -146,41 +164,57 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
                 {tr(locale, "Login", "Нэвтрэх")}
               </Button>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className="rounded-full border p-0.5 hover:bg-neutral-50 transition"
-                    aria-label="Open profile menu"
+              <>
+                {isAdmin && (
+                  <Button
+                    asChild
+                    className="bg-amber-300 text-neutral-900 hover:bg-amber-200"
                   >
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={avatarUrl ?? undefined} alt="Profile" />
-                      <AvatarFallback>{getInitial(userEmail)}</AvatarFallback>
-                    </Avatar>
-                  </button>
-                </DropdownMenuTrigger>
+                    <Link href="/admin">{tr(locale, "Admin", "Админ")}</Link>
+                  </Button>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="rounded-full border p-0.5 hover:bg-neutral-50 transition"
+                      aria-label="Open profile menu"
+                    >
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={avatarUrl ?? undefined} alt="Profile" />
+                        <AvatarFallback>{getInitial(userEmail)}</AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-3 py-2">
-                    <p className="text-xs text-muted-foreground">
-                      {tr(locale, "Signed in:", "Нэвтэрсэн:")}
-                    </p>
-                    <p className="text-sm font-semibold truncate">
-                      {userEmail}
-                    </p>
-                  </div>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-3 py-2">
+                      <p className="text-xs text-muted-foreground">
+                        {tr(locale, "Signed in:", "Нэвтэрсэн:")}
+                      </p>
+                      <p className="text-sm font-semibold truncate">
+                        {userEmail}
+                      </p>
+                    </div>
 
-                  <DropdownMenuItem asChild>
-                    <Link href="/reservation">
-                      {tr(locale, "My Reservations", "Миний захиалгууд")}
-                    </Link>
-                  </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">{tr(locale, "Admin Panel", "Админ самбар")}</Link>
+                      </DropdownMenuItem>
+                    )}
 
-                  <DropdownMenuItem onClick={logout} className="gap-2">
-                    <LogOut className="h-4 w-4" />
-                    {tr(locale, "Logout", "Гарах")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuItem asChild>
+                      <Link href="/reservation">
+                        {tr(locale, "My Reservations", "Миний захиалгууд")}
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={logout} className="gap-2">
+                      <LogOut className="h-4 w-4" />
+                      {tr(locale, "Logout", "Гарах")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             )}
           </div>
 
@@ -239,6 +273,14 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
                       </Button>
                     ) : (
                       <>
+                        {isAdmin && (
+                          <Button
+                            asChild
+                            className="w-full justify-start bg-amber-300 text-neutral-900 hover:bg-amber-200"
+                          >
+                            <Link href="/admin">{tr(locale, "Admin", "Админ")}</Link>
+                          </Button>
+                        )}
                         <Button
                           asChild
                           variant="outline"
