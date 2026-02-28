@@ -415,7 +415,9 @@ export default function ReservationClient({
         match.status === "rejected"
       ) {
         setPaymentTicket((prev) =>
-          prev ? { ...prev, status: match.status as PaymentTicket["status"] } : prev,
+          prev
+            ? { ...prev, status: match.status as PaymentTicket["status"] }
+            : prev,
         );
       }
     };
@@ -491,7 +493,7 @@ export default function ReservationClient({
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
           <div className="mb-4 rounded-xl bg-amber-300 py-3 text-center text-sm font-semibold text-neutral-900">
-            {tr(locale, "STAGE / LIVE MUSIC", "ТАЙЗ / АМЬД ХӨГЖИМ")}
+            {tr(locale, "STAGE", "ТАЙЗ")}
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
@@ -700,10 +702,18 @@ export default function ReservationClient({
                 {paymentTicket.status === "confirmed"
                   ? tr(locale, "Reservation Confirmed", "Захиалга баталгаажсан")
                   : paymentTicket.status === "pending_payment"
-                    ? tr(locale, "Payment Pending Approval", "Төлбөр шалгагдах хүлээлттэй")
+                    ? tr(
+                        locale,
+                        "Payment Pending Approval",
+                        "Төлбөр шалгагдах хүлээлттэй",
+                      )
                     : paymentTicket.status === "rejected"
                       ? tr(locale, "Payment Rejected", "Төлбөр татгалзсан")
-                      : tr(locale, "Reservation Cancelled", "Захиалга цуцлагдсан")}
+                      : tr(
+                          locale,
+                          "Reservation Cancelled",
+                          "Захиалга цуцлагдсан",
+                        )}
               </p>
               <div className="mt-2 space-y-1 text-xs">
                 <p>
@@ -727,7 +737,9 @@ export default function ReservationClient({
                 </p>
                 <p>
                   {tr(locale, "Payment reference", "Гүйлгээний утга")}:{" "}
-                  <span className="font-semibold">{paymentTicket.reference}</span>
+                  <span className="font-semibold">
+                    {paymentTicket.reference}
+                  </span>
                 </p>
               </div>
               <p className="mt-3 text-xs">
