@@ -8,6 +8,10 @@ import {
   defaultAboutContent,
   parseAboutContent,
 } from "@/lib/about-content";
+import { tr } from "@/lib/i18n";
+import { useLocale } from "@/app/components/use-locale";
+import AdminConfirmDialog from "@/app/components/admin-confirm-dialog";
+import { uploadAdminImage } from "@/lib/client-image-upload";
 
 const cn = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
 
@@ -20,11 +24,13 @@ type AboutDTO = {
 };
 
 export default function AdminAboutPage() {
+  const { locale } = useLocale();
   const [raw, setRaw] = useState<AboutDTO | null>(null);
   const [content, setContent] = useState<AboutContent>(defaultAboutContent);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const load = async () => {
     const res = await fetch("/api/admin/about", { cache: "no-store" });
@@ -42,18 +48,80 @@ export default function AdminAboutPage() {
     setUploading(true);
     setMsg(null);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: fd,
-      });
-      if (!res.ok) return setMsg("Upload failed");
-      const d = await res.json();
-      setRaw((p) => (p ? { ...p, imageUrl: d.url } : p));
+      const up = await uploadAdminImage(file);
+      return up.url;
+    } catch (error) {
+      const reason = String((error as Error)?.message || "Upload failed");
+      console.error("[About upload] " + reason);
+      setMsg(reason);
+      return null;
     } finally {
       setUploading(false);
     }
+  };
+
+  const uploadHeaderImage = async (file: File) => {
+    const url = await upload(file);
+    if (!url) return;
+    setRaw((p) => (p ? { ...p, imageUrl: url } : p));
+  };
+
+  const uploadGalleryFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    for (const file of Array.from(files)) {
+      const url = await upload(file);
+      if (!url) continue;
+      setContent((prev) => ({
+        ...prev,
+        gallery: [...prev.gallery, { imageUrl: url, text: { en: "", mn: "" } }],
+      }));
+    }
+  };
+
+  const replaceGalleryImage = async (index: number, file: File) => {
+    const url = await upload(file);
+    if (!url) return;
+    setContent((prev) => ({
+      ...prev,
+      gallery: prev.gallery.map((img, i) =>
+        i === index ? { ...img, imageUrl: url } : img,
+      ),
+    }));
+  };
+
+  const updateGalleryText = (index: number, field: "en" | "mn", value: string) => {
+    setContent((prev) => ({
+      ...prev,
+      gallery: prev.gallery.map((item, i) =>
+        i === index ? { ...item, text: { ...item.text, [field]: value } } : item,
+      ),
+    }));
+  };
+
+  const removeGallery = (index: number) => {
+    setContent((prev) => ({
+      ...prev,
+      gallery: prev.gallery.filter((_, i) => i !== index),
+    }));
+  };
+
+  const askRemoveGallery = (index: number) => setDeleteIndex(index);
+  const closeConfirm = () => setDeleteIndex(null);
+  const runConfirm = () => {
+    if (deleteIndex === null) return;
+    const idx = deleteIndex;
+    closeConfirm();
+    removeGallery(idx);
+  };
+
+  const moveGallery = (index: number, dir: "left" | "right") => {
+    setContent((prev) => {
+      const target = dir === "left" ? index - 1 : index + 1;
+      if (target < 0 || target >= prev.gallery.length) return prev;
+      const next = [...prev.gallery];
+      [next[index], next[target]] = [next[target], next[index]];
+      return { ...prev, gallery: next };
+    });
   };
 
   const save = async () => {
@@ -108,14 +176,9 @@ export default function AdminAboutPage() {
                 accept="image/*"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) upload(f);
+                  if (f) uploadHeaderImage(f);
+                  e.currentTarget.value = "";
                 }}
-              />
-              <input
-                className="mt-3 h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
-                value={raw.imageUrl ?? ""}
-                onChange={(e) => setRaw({ ...raw, imageUrl: e.target.value })}
-                placeholder="...or paste image url"
               />
               <p className="mt-2 text-xs text-amber-100/70">
                 {uploading ? "Uploading..." : ""}
@@ -132,6 +195,125 @@ export default function AdminAboutPage() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
+          <p className="text-sm text-amber-100/75">About Gallery Images</p>
+
+          <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_220px]">
+            <div className="space-y-3">
+              <input
+                className="block w-full text-sm"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  void uploadGalleryFiles(e.target.files);
+                  e.currentTarget.value = "";
+                }}
+              />
+
+              <p className="text-xs text-amber-100/65">
+                Upload many photos at once, then reorder them to control how they appear on
+                the About page.
+              </p>
+
+              {msg && <p className="text-sm text-amber-100/85">{msg}</p>}
+            </div>
+
+            <div className="rounded-xl border border-amber-300/25 bg-black/25 p-3">
+              <p className="text-xs text-amber-100/70">Total Gallery Images</p>
+              <p className="mt-1 text-3xl font-bold text-amber-50">{content.gallery.length}</p>
+              <p className="mt-1 text-xs text-amber-100/65">Saved with the About page content.</p>
+            </div>
+          </div>
+
+          {content.gallery.length > 0 ? (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {content.gallery.map((item, index) => (
+                <div
+                  key={`${item.imageUrl}-${index}`}
+                  className="overflow-hidden rounded-2xl border border-amber-300/25 bg-black/20"
+                >
+                  <div className="h-40 bg-black/30">
+                    <img
+                      src={item.imageUrl}
+                      alt={`about-gallery-${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="grid gap-2 p-3">
+                    <input
+                      className="block w-full text-xs text-amber-100/90"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        void replaceGalleryImage(index, f);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => moveGallery(index, "left")}
+                        disabled={index === 0}
+                        className={cn(
+                          "h-9 rounded-lg border border-amber-300/35 text-xs font-semibold text-amber-50 transition",
+                          index === 0 ? "opacity-50" : "hover:bg-amber-300/15",
+                        )}
+                      >
+                        Left
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveGallery(index, "right")}
+                        disabled={index === content.gallery.length - 1}
+                        className={cn(
+                          "h-9 rounded-lg border border-amber-300/35 text-xs font-semibold text-amber-50 transition",
+                          index === content.gallery.length - 1
+                            ? "opacity-50"
+                            : "hover:bg-amber-300/15",
+                        )}
+                      >
+                        Right
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => askRemoveGallery(index)}
+                        className="h-9 rounded-lg border border-amber-300/35 text-xs font-semibold text-amber-50 transition hover:bg-amber-300/15"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <input
+                        className="h-9 rounded-lg border border-amber-300/35 bg-black/30 px-2 text-xs text-amber-50"
+                        value={item.text.en}
+                        onChange={(e) =>
+                          updateGalleryText(index, "en", e.target.value)
+                        }
+                        placeholder="Overlay text (EN)"
+                      />
+                      <input
+                        className="h-9 rounded-lg border border-amber-300/35 bg-black/30 px-2 text-xs text-amber-50"
+                        value={item.text.mn}
+                        onChange={(e) =>
+                          updateGalleryText(index, "mn", e.target.value)
+                        }
+                        placeholder="Overlay text (MN)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 flex h-28 items-center justify-center rounded-2xl border border-dashed border-amber-300/25 bg-black/20 text-sm text-amber-100/70">
+              No gallery images yet
+            </div>
+          )}
         </div>
 
         <BilingualField
@@ -223,6 +405,21 @@ export default function AdminAboutPage() {
 
         {msg && <p className="text-sm text-amber-100/80">{msg}</p>}
       </div>
+      <AdminConfirmDialog
+        open={deleteIndex !== null}
+        locale={locale}
+        title={tr(locale, "Delete this image?", "Энэ зургийг устгах уу?")}
+        body={tr(
+          locale,
+          "This About gallery image will be permanently deleted.",
+          "Энэ About gallery зураг бүр мөсөн устна.",
+        )}
+        tone="red"
+        confirmLabel={tr(locale, "Delete", "Устгах")}
+        cancelLabel={tr(locale, "Back", "Буцах")}
+        onCancel={closeConfirm}
+        onConfirm={runConfirm}
+      />
     </section>
   );
 }

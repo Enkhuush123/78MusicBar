@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { supabase as supabaseClient } from "@/lib/supabase/browser";
 import { X } from "lucide-react";
 import { Locale, tr } from "@/lib/i18n";
@@ -110,23 +111,33 @@ export function LoginModal({ open, onClose, locale }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       <div
-        className="w-full max-w-4xl overflow-hidden rounded-2xl border border-amber-300/30 bg-[#120e0b] text-amber-50 shadow-xl"
+        className="w-full max-w-4xl overflow-hidden rounded-2xl border border-[#d8cec1] bg-[#fffdfa] text-[#2d241b] shadow-xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="grid md:grid-cols-2">
           <div className="p-6 md:p-8">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="jazz-heading text-4xl text-amber-100">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-xl border border-[#dccfbd] bg-[#f8f2e9] px-2.5 py-1.5">
+                  <Image
+                    src="/78MusicBar.png"
+                    alt="78MusicBar"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 rounded-md object-cover"
+                  />
+                  <p className="jazz-heading text-sm text-[#2d241b]">78MusicBar</p>
+                </div>
+                <h2 className="jazz-heading text-4xl text-[#2d241b]">
                   {mode === "login"
                     ? tr(locale, "Login", "Нэвтрэх")
                     : tr(locale, "Sign Up", "Бүртгүүлэх")}
                 </h2>
-                <p className="mt-1 text-sm text-amber-100/75">
+                <p className="mt-1 text-sm text-[#4f4338]/80">
                   {tr(
                     locale,
                     "Login to make reservations with your account.",
@@ -137,20 +148,20 @@ export function LoginModal({ open, onClose, locale }: Props) {
 
               <button
                 onClick={onClose}
-                className="rounded-lg border border-amber-300/30 p-2 hover:bg-amber-300/15 transition"
+                className="rounded-lg border border-[#d8cec1] p-2 hover:bg-[#f3ece3] transition"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 rounded-xl border border-amber-300/25 p-1">
+            <div className="mt-6 grid grid-cols-2 rounded-xl border border-[#dbd2c7] p-1">
               <button
                 className={cn(
                   "h-10 rounded-lg text-sm font-medium transition",
                   mode === "login"
-                    ? "bg-amber-300 text-neutral-900"
-                    : "hover:bg-amber-300/15",
+                    ? "bg-[#2f261d] text-[#fffdfa]"
+                    : "hover:bg-[#f3ece3]",
                 )}
                 onClick={() => setMode("login")}
                 type="button"
@@ -162,8 +173,8 @@ export function LoginModal({ open, onClose, locale }: Props) {
                 className={cn(
                   "h-10 rounded-lg text-sm font-medium transition",
                   mode === "signup"
-                    ? "bg-amber-300 text-neutral-900"
-                    : "hover:bg-amber-300/15",
+                    ? "bg-[#2f261d] text-[#fffdfa]"
+                    : "hover:bg-[#f3ece3]",
                 )}
                 onClick={() => setMode("signup")}
                 type="button"
@@ -174,9 +185,9 @@ export function LoginModal({ open, onClose, locale }: Props) {
 
             <div className="mt-6 grid gap-3">
               <div>
-                <p className="text-sm text-amber-100/75">{tr(locale, "Email", "Имэйл")}</p>
+                <p className="text-sm text-[#4f4338]/80">{tr(locale, "Email", "Имэйл")}</p>
                 <input
-                  className="mt-2 h-11 w-full rounded-xl border border-amber-300/30 bg-black/30 px-3"
+                  className="mt-2 h-11 w-full rounded-xl border border-[#d8cec1] bg-white px-3"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@email.com"
@@ -185,9 +196,9 @@ export function LoginModal({ open, onClose, locale }: Props) {
 
               {mode === "signup" && (
                 <div>
-                  <p className="text-sm text-amber-100/75">{tr(locale, "Phone", "Утас")}</p>
+                  <p className="text-sm text-[#4f4338]/80">{tr(locale, "Phone", "Утас")}</p>
                   <input
-                    className="mt-2 h-11 w-full rounded-xl border border-amber-300/30 bg-black/30 px-3"
+                    className="mt-2 h-11 w-full rounded-xl border border-[#d8cec1] bg-white px-3"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
@@ -195,10 +206,10 @@ export function LoginModal({ open, onClose, locale }: Props) {
               )}
 
               <div>
-                <p className="text-sm text-amber-100/75">{tr(locale, "Password", "Нууц үг")}</p>
+                <p className="text-sm text-[#4f4338]/80">{tr(locale, "Password", "Нууц үг")}</p>
                 <input
                   type="password"
-                  className="mt-2 h-11 w-full rounded-xl border border-amber-300/30 bg-black/30 px-3"
+                  className="mt-2 h-11 w-full rounded-xl border border-[#d8cec1] bg-white px-3"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="********"
@@ -213,7 +224,7 @@ export function LoginModal({ open, onClose, locale }: Props) {
                   "mt-2 h-11 w-full rounded-xl font-medium transition",
                   loading
                     ? "bg-neutral-200 text-neutral-500"
-                    : "bg-amber-300 text-neutral-900 hover:bg-amber-200",
+                    : "bg-[#2f261d] text-[#fffdfa] hover:bg-[#201912]",
                 )}
               >
                 {loading
@@ -223,27 +234,35 @@ export function LoginModal({ open, onClose, locale }: Props) {
                     : tr(locale, "Sign Up", "Бүртгүүлэх")}
               </button>
 
-              {msg && <p className="text-sm text-amber-100/80">{msg}</p>}
+              {msg && <p className="text-sm text-[#4f4338]/90">{msg}</p>}
             </div>
           </div>
 
           <div className="relative hidden md:block">
-            <div className="absolute inset-0 bg-neutral-950" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,200,100,0.18),transparent_45%)]" />
-            <div className="relative flex h-full flex-col justify-between p-10 text-white">
+            <div className="absolute inset-0 bg-[#f6f1e9]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(176,140,102,0.12),transparent_45%)]" />
+            <div className="relative flex h-full flex-col justify-between p-10 text-[#2d241b]">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl border border-amber-300/40 bg-amber-300/10" />
+                <div className="h-12 w-12 overflow-hidden rounded-xl border border-[#d8c6b0] bg-[#f8f3ec]">
+                  <Image
+                    src="/78MusicBar.png"
+                    alt="78MusicBar"
+                    width={48}
+                    height={48}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
                 <div>
-                  <p className="jazz-heading text-2xl text-amber-100">MusicBar78</p>
-                  <p className="text-sm text-amber-100/70">Live music • Events</p>
+                  <p className="jazz-heading text-2xl text-[#2d241b]">78MusicBar</p>
+                  <p className="text-sm text-[#4f4338]/80">Live music • Events</p>
                 </div>
               </div>
 
               <div>
-                <p className="jazz-heading text-4xl leading-snug text-amber-100">
+                <p className="jazz-heading text-4xl leading-snug text-[#2d241b]">
                   {tr(locale, "Events and table reservations.", "Эвентүүд, ширээ захиалга.")}
                 </p>
-                <p className="mt-3 text-amber-100/70">
+                <p className="mt-3 text-[#4f4338]/80">
                   {tr(
                     locale,
                     "When logged in, your reservations are linked to your account.",
@@ -252,8 +271,8 @@ export function LoginModal({ open, onClose, locale }: Props) {
                 </p>
               </div>
 
-              <p className="text-xs text-white/50">
-                © {new Date().getFullYear()} MusicBar78
+              <p className="text-xs text-[#4f4338]/70">
+                © {new Date().getFullYear()} 78MusicBar
               </p>
             </div>
           </div>

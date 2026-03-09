@@ -66,19 +66,19 @@ export function AdminReservationNotifier({ locale }: { locale: Locale }) {
     <>
       <Link
         href="/admin/reservations"
-        className="rounded-xl border border-red-300/40 bg-red-500/10 px-4 py-2 text-red-100 hover:bg-red-500/20 transition"
+        className="block rounded-xl border border-red-300/45 bg-red-500/10 px-3 py-2 text-sm text-red-100 transition hover:bg-red-500/20"
       >
         {tr(locale, "Pending Payments", "Хүлээгдэж буй төлбөр")}{" "}
         <span className="font-semibold">({pendingCount})</span>
       </Link>
 
       {toast && (
-        <div className="fixed right-4 bottom-4 z-50 max-w-sm rounded-xl border border-red-300/40 bg-neutral-950 px-4 py-3 text-sm text-red-100 shadow-xl">
+        <div className="fixed right-4 bottom-4 z-50 max-w-sm rounded-xl border border-red-300/45 bg-[linear-gradient(165deg,rgba(45,21,21,0.96)_0%,rgba(30,16,16,0.98)_100%)] px-4 py-3 text-sm text-red-100 shadow-xl">
           <p className="font-semibold">{tr(locale, "New Reservation", "Шинэ захиалга")}</p>
           <p className="mt-1">{toast}</p>
           <Link
             href="/admin/reservations"
-            className="mt-3 inline-flex rounded-lg border border-red-300/50 px-3 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/15"
+            className="mt-3 inline-flex rounded-lg border border-red-300/55 px-3 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/15"
           >
             {tr(locale, "Open reservations", "Захиалгууд руу орох")}
           </Link>

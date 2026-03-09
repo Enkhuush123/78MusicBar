@@ -13,9 +13,9 @@ export default async function FoodMenuPage() {
   return (
     <main className="pt-24">
       <section className="mx-auto max-w-6xl px-4">
-        <div className="jazz-shell rounded-3xl p-8 md:p-10">
-          <p className="jazz-heading text-amber-200">{tr(locale, "Menu", "Меню")}</p>
-          <h1 className="jazz-heading text-5xl text-amber-50 md:text-7xl">
+        <div className="ger-surface rounded-3xl p-8 md:p-10">
+          <p className="ger-kicker">{tr(locale, "Menu", "Меню")}</p>
+          <h1 className="jazz-heading text-5xl text-[#2f2116] md:text-7xl">
             {tr(locale, "Food", "Хоол")}
           </h1>
         </div>

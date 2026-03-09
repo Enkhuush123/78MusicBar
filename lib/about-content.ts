@@ -5,6 +5,11 @@ export type Bilingual = {
   mn: string;
 };
 
+export type AboutGalleryItem = {
+  imageUrl: string;
+  text: Bilingual;
+};
+
 export type AboutContent = {
   intro: Bilingual;
   storyHeading: Bilingual;
@@ -17,6 +22,7 @@ export type AboutContent = {
   address: Bilingual;
   hours: Bilingual;
   contact: Bilingual;
+  gallery: AboutGalleryItem[];
 };
 
 export const defaultAboutContent: AboutContent = {
@@ -46,6 +52,7 @@ export const defaultAboutContent: AboutContent = {
   address: { en: "Ulaanbaatar, Mongolia", mn: "Улаанбаатар, Монгол" },
   hours: { en: "Mon–Sun • 18:00 – Late", mn: "Даваа–Ням • 18:00 – Оройн цагаар" },
   contact: { en: "info@78musicbar.com", mn: "info@78musicbar.com" },
+  gallery: [],
 };
 
 function toBilingual(
@@ -66,6 +73,35 @@ function toBilingual(
   return fallback;
 }
 
+function toGalleryArray(
+  value: unknown,
+  fallback: AboutGalleryItem[],
+): AboutGalleryItem[] {
+  if (!Array.isArray(value)) return fallback;
+  return value
+    .map((item) => {
+      if (typeof item === "string") {
+        const imageUrl = item.trim();
+        if (!imageUrl) return null;
+        return { imageUrl, text: { en: "", mn: "" } };
+      }
+      if (!item || typeof item !== "object") return null;
+      const raw = item as {
+        imageUrl?: unknown;
+        url?: unknown;
+        text?: unknown;
+        caption?: unknown;
+      };
+      const imageUrl = String(raw.imageUrl ?? raw.url ?? "").trim();
+      if (!imageUrl) return null;
+      return {
+        imageUrl,
+        text: toBilingual(raw.text ?? raw.caption, { en: "", mn: "" }),
+      };
+    })
+    .filter((item): item is AboutGalleryItem => !!item);
+}
+
 export function parseAboutContent(raw?: string | null): AboutContent {
   if (!raw) return defaultAboutContent;
   try {
@@ -82,6 +118,7 @@ export function parseAboutContent(raw?: string | null): AboutContent {
       address: toBilingual(parsed.address, defaultAboutContent.address),
       hours: toBilingual(parsed.hours, defaultAboutContent.hours),
       contact: toBilingual(parsed.contact, defaultAboutContent.contact),
+      gallery: toGalleryArray(parsed.gallery, defaultAboutContent.gallery),
     };
   } catch {
     return {

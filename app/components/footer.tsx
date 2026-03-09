@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FaFacebookSquare, FaInstagramSquare } from "react-icons/fa";
 import { Locale, tr } from "@/lib/i18n";
+import Image from "next/image";
 
 type FooterProps = {
   locale: Locale;
@@ -8,15 +9,24 @@ type FooterProps = {
 
 export const Footer = ({ locale }: FooterProps) => {
   return (
-    <footer className="mt-16 border-t border-amber-300/20 bg-[#100c09] text-amber-50">
+    <footer className="mt-16 border-t border-[#ccb89f] bg-[linear-gradient(180deg,#f7efe3_0%,#efe2d1_100%)] text-[#2d241b]">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
-          <p className="jazz-heading text-2xl">78 Music Bar</p>
-          <p className="mt-3 text-sm text-amber-100/80">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/78MusicBar.png"
+              width={32}
+              height={32}
+              alt="78MusicBar Logo"
+              className="h-8 w-8 rounded-md object-cover"
+            />
+            <p className="jazz-heading text-2xl">78MusicBar</p>
+          </div>
+          <p className="mt-3 text-sm text-[#4a3f34]/85">
             {tr(
               locale,
-              "Live jazz. Crafted drinks. Late-night tables.",
-              "Амьд хөгжмийн үдэш. Тусгай коктейль. Оройн захиалга.",
+              "Events, Special cocktails, Reserves.",
+              "Эвентүүд, Тусгай коктейль, Ширээ захиалга",
             )}
           </p>
         </div>
@@ -25,7 +35,7 @@ export const Footer = ({ locale }: FooterProps) => {
           <p className="jazz-heading text-sm tracking-[0.18em]">
             {tr(locale, "Visit", "Хаяг")}
           </p>
-          <p className="mt-3 text-sm text-amber-100/80">Ulaanbaatar, B1</p>
+          <p className="mt-3 text-sm text-[#4a3f34]/85">Ulaanbaatar, B1</p>
           <a
             className="mt-2 inline-block text-sm underline underline-offset-4"
             href="https://www.google.com/maps/place/GERMOOD/@47.9184203,106.9116743,17z/data=!3m1!4b1!4m6!3m5!1s0x5d9693006c2af817:0x7456cb07c6f2e334!8m2!3d47.9184203!4d106.9142492!16s%2Fg%2F11xs9d5gw5?entry=ttu&g_ep=EgoyMDI2MDIxNi4wIKXMDSoASAFQAw%3D%3D"
@@ -40,8 +50,8 @@ export const Footer = ({ locale }: FooterProps) => {
           <p className="jazz-heading text-sm tracking-[0.18em]">
             {tr(locale, "Contact", "Холбоо барих")}
           </p>
-          <p className="mt-3 text-sm text-amber-100/80">+976 8065 1328</p>
-          <p className="text-sm text-amber-100/80">musicbar78@gmail.com</p>
+          <p className="mt-3 text-sm text-[#4a3f34]/85">+976 8065 1328</p>
+          <p className="text-sm text-[#4a3f34]/85">78musicbar@gmail.com</p>
         </div>
 
         <div>
@@ -54,10 +64,20 @@ export const Footer = ({ locale }: FooterProps) => {
             <Link href="/menu/food">{tr(locale, "Food", "Хоол")}</Link>
           </div>
           <div className="mt-4 flex gap-3">
-            <a href="https://facebook.com/Cafe78barcafecoffee" target="_blank" rel="noreferrer" aria-label="Facebook">
+            <a
+              href="https://facebook.com/Cafe78barcafecoffee"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Facebook"
+            >
               <FaFacebookSquare size={22} />
             </a>
-            <a href="https://instagram.com/78musicbar/" target="_blank" rel="noreferrer" aria-label="Instagram">
+            <a
+              href="https://instagram.com/78musicbar/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Instagram"
+            >
               <FaInstagramSquare size={22} />
             </a>
           </div>

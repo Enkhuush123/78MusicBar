@@ -27,10 +27,13 @@ import { supabase as supabaseClient } from "@/lib/supabase/browser";
 import { LoginModal } from "./auth/login";
 import { Locale, tr } from "@/lib/i18n";
 import { useLocale } from "./use-locale";
+import Image from "next/image";
 
 const nav = [
   { en: "Home", mn: "Нүүр", href: "/" },
   { en: "Events", mn: "Эвент", href: "/events" },
+  { en: "Open Deck", mn: "Open Deck", href: "/open-deck" },
+  { en: "Collections", mn: "Collection", href: "/collections" },
   { en: "About", mn: "Бидний тухай", href: "/about" },
 ];
 
@@ -110,11 +113,17 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 px-4">
-        <div className="mx-auto mt-3 flex h-16 max-w-6xl items-center justify-between rounded-2xl border border-amber-400/30 bg-neutral-950/80 px-4 text-amber-100 backdrop-blur">
+        <div className="mx-auto mt-3 flex h-16 max-w-6xl items-center justify-between rounded-2xl border border-[#c9b39a] bg-[linear-gradient(180deg,rgba(253,249,242,0.96)_0%,rgba(246,236,224,0.95)_100%)] px-4 text-[#2d241b] shadow-sm backdrop-blur">
           <Link href="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-md border border-amber-300/40 bg-amber-300/10" />
-            <span className="jazz-heading text-lg tracking-[0.16em]">
-              78 Music Bar
+            <Image
+              src="/78MusicBar.png"
+              width={36}
+              height={36}
+              alt="78MusicBar Logo"
+              className="h-9 w-9 rounded-md object-cover"
+            />
+            <span className="jazz-heading text-lg tracking-[0.08em]">
+              78MusicBar
             </span>
           </Link>
 
@@ -126,8 +135,8 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
                 variant={isActive(item.href) ? "default" : "ghost"}
                 className={
                   isActive(item.href)
-                    ? "bg-amber-300 text-neutral-900 hover:bg-amber-200"
-                    : "text-amber-100 hover:bg-amber-200/15 hover:text-amber-50"
+                    ? "bg-[#4b3a29] text-[#fffdfa] hover:bg-[#3f3225]"
+                    : "text-[#3f3428] hover:bg-[#efe7db] hover:text-[#2d241b]"
                 }
               >
                 <Link href={item.href}>{tr(locale, item.en, item.mn)}</Link>
@@ -154,7 +163,7 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
           <div className="hidden md:flex items-center gap-2">
             <Button
               variant="outline"
-              className="border-amber-300/40 bg-transparent text-amber-100 hover:bg-amber-200/15"
+              className="border-[#d4c8bc] bg-transparent text-[#2f251c] hover:bg-[#f4ede3]"
               onClick={toggleLocale}
             >
               {locale.toUpperCase()}
@@ -168,7 +177,7 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
                 {isAdmin && (
                   <Button
                     asChild
-                    className="bg-amber-300 text-neutral-900 hover:bg-amber-200"
+                    className="bg-[#2f261d] text-[#fffdfa] hover:bg-[#201912]"
                   >
                     <Link href="/admin">{tr(locale, "Admin", "Админ")}</Link>
                   </Button>
@@ -234,7 +243,7 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
                 <div className="mt-6 grid gap-2">
                   <Button
                     variant="outline"
-                    className="w-full justify-start border-amber-300/40 bg-transparent text-amber-100 hover:bg-amber-200/15"
+                    className="w-full justify-start border-[#d2b292]/60 bg-white text-[#2f2116] hover:bg-[#f7ecdd]"
                     onClick={toggleLocale}
                   >
                     {tr(locale, "Language", "Хэл")}: {locale.toUpperCase()}

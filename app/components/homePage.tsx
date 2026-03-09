@@ -1,14 +1,58 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { EventCard } from "@/app/components/eventCard";
 import { tr } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/i18n-server";
 import ReviewsSection from "@/app/components/reviewsSection";
+import CollectionsShowcase from "@/app/components/collections-showcase";
+import UpcomingRow from "@/app/components/upcoming-row";
+import OpenDeckLineup from "@/app/components/openDeckLineup";
+import HomeHeroCarousel from "@/app/components/home-hero-carousel";
+import HomeGalleryCarousel from "@/app/components/home-gallery-carousel";
+import { HOME_GALLERY_SLUG, parseHomeGallery } from "@/lib/home-gallery";
+
+const FIXED_TYPES = [
+  { key: "dj", nameEn: "DJ", nameMn: "DJ" },
+  { key: "artist", nameEn: "Artist", nameMn: "Artist" },
+  { key: "band", nameEn: "Band", nameMn: "Band" },
+] as const;
+
+function normalizeTypeKey(nameEn: string, nameMn: string) {
+  const raw = `${nameEn} ${nameMn}`.toLowerCase();
+  if (raw.includes("dj")) return "dj";
+  if (raw.includes("band") || raw.includes("хамтлаг")) return "band";
+  if (raw.includes("artist") || raw.includes("уран")) return "artist";
+  return null;
+}
 
 function formatDateTime(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} • ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function toSafeImageUrl(value?: string | null) {
+  const url = String(value ?? "").trim();
+  if (!url) return null;
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("/")
+  ) {
+    return url;
+  }
+  return null;
+}
+
+function uniqueUrls(values: Array<string | null | undefined>) {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of values) {
+    const safe = toSafeImageUrl(raw);
+    if (!safe || seen.has(safe)) continue;
+    seen.add(safe);
+    out.push(safe);
+  }
+  return out;
 }
 
 export default async function HomePage() {
@@ -18,6 +62,13 @@ export default async function HomePage() {
   const hero = await prisma.homeHero.findFirst({
     where: { isActive: true },
     orderBy: { updatedAt: "desc" },
+  });
+  const heroSlides = await prisma.homeImage.findMany({
+    orderBy: [{ sort: "asc" }, { createdAt: "desc" }],
+    take: 40,
+  });
+  const homeGalleryPage = await prisma.sitePage.findUnique({
+    where: { slug: HOME_GALLERY_SLUG },
   });
 
   const manualFeatured = await prisma.homeFeaturedEvent.findMany({
@@ -71,131 +122,311 @@ export default async function HomePage() {
     })
     .catch(() => []);
 
-  const heroImg = hero?.imageUrl || "/galaxy.jpg";
+  const collectionsDelegate = (
+    prisma as unknown as {
+      collectionCategory?: {
+        findMany: (args: unknown) => Promise<
+          Array<{
+            id: string;
+            nameEn: string;
+            nameMn: string;
+            sort: number;
+            isActive: boolean;
+            items: Array<{
+              id: string;
+              nameEn: string;
+              nameMn: string;
+              infoEn: string;
+              infoMn: string;
+              imageUrl: string | null;
+              isActive: boolean;
+              sort: number;
+            }>;
+          }>
+        >;
+      };
+    }
+  ).collectionCategory;
+
+  const categories = collectionsDelegate
+    ? await collectionsDelegate
+        .findMany({
+          where: { isActive: true },
+          orderBy: [{ sort: "asc" }, { createdAt: "asc" }],
+          include: {
+            items: {
+              where: { isActive: true },
+              orderBy: [{ sort: "asc" }, { createdAt: "desc" }],
+            },
+          },
+        })
+        .catch(() => [])
+    : [];
+
+  const openDeckDelegate = (
+    prisma as unknown as {
+      openDeckReservation?: {
+        findMany: (args: unknown) => Promise<
+          Array<{
+            id: string;
+            djName: string;
+            genre: string;
+            socialUrl: string | null;
+            slot: {
+              startsAt: Date;
+              endsAt: Date;
+              day: { eventDate: Date };
+            } | null;
+          }>
+        >;
+      };
+    }
+  ).openDeckReservation;
+
+  const approvedOpenDeck = openDeckDelegate
+    ? await openDeckDelegate
+        .findMany({
+          where: { status: "approved" },
+          orderBy: [{ slot: { startsAt: "asc" } }, { approvedAt: "desc" }],
+          take: 12,
+          select: {
+            id: true,
+            djName: true,
+            genre: true,
+            socialUrl: true,
+            slot: {
+              select: {
+                startsAt: true,
+                endsAt: true,
+                day: { select: { eventDate: true } },
+              },
+            },
+          },
+        })
+        .catch(() => [])
+    : [];
+
+  const categoryByType = new Map<
+    "dj" | "artist" | "band",
+    (typeof categories)[number]
+  >();
+  for (const cat of categories) {
+    const key = normalizeTypeKey(cat.nameEn, cat.nameMn);
+    if (key && !categoryByType.has(key)) categoryByType.set(key, cat);
+  }
+  const performerGroups = FIXED_TYPES.map((type) => {
+    const cat = categoryByType.get(type.key);
+    return {
+      key: type.key,
+      label: locale === "mn" ? type.nameMn : type.nameEn,
+      subtitle: tr(locale, "Performer Type", "Уран бүтээлчийн төрөл"),
+      items: (cat?.items ?? []).map((row) => ({
+        id: row.id,
+        name: locale === "mn" ? row.nameMn : row.nameEn,
+        info: locale === "mn" ? row.infoMn : row.infoEn,
+        imageUrl: row.imageUrl,
+      })),
+    };
+  }).filter((group) => group.items.length > 0);
+  const performerCount = performerGroups.reduce(
+    (sum, group) => sum + group.items.length,
+    0,
+  );
+
+  const activeSliderImages = heroSlides
+    .filter((row) => row.isActive)
+    .map((row) => row.imageUrl);
+  const anySliderImages = heroSlides.map((row) => row.imageUrl);
+  const heroImages = uniqueUrls([
+    ...(activeSliderImages.length ? activeSliderImages : anySliderImages),
+    hero?.imageUrl,
+  ]);
+  const galleryRows = parseHomeGallery(homeGalleryPage?.body);
+  const activeGalleryImages = galleryRows
+    .filter((row) => row.isActive)
+    .map((row) => row.imageUrl);
+  const anyGalleryImages = galleryRows.map((row) => row.imageUrl);
+  const galleryImages = uniqueUrls(
+    activeGalleryImages.length ? activeGalleryImages : anyGalleryImages,
+  ).slice(0, 18);
 
   return (
     <main className="pt-20">
-      <section className="mx-auto max-w-6xl px-4">
-        <div className="jazz-shell relative overflow-hidden rounded-3xl">
-          <div className="h-[64vh] min-h-[520px]">
-            <img
-              src={heroImg}
-              alt="hero"
-              className="h-full w-full object-cover"
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/30" />
-          <div className="absolute inset-0 flex items-end">
-            <div className="max-w-2xl p-8 md:p-12">
-              <h1 className="jazz-heading mt-3 text-5xl text-amber-50 md:text-7xl">
-                {hero?.headline ||
-                  tr(locale, "Late Night Rhythm", "Шөнийн Хэмнэл")}
-              </h1>
-              <p className="mt-4 text-xl text-amber-100/85">
-                {hero?.subheadline ||
-                  tr(
-                    locale,
-                    "Reserve your table for live sets and signature drinks.",
-                    "Амьд хөгжмийн үдэшлэгт ширээгээ урьдчилж захиалаарай.",
-                  )}
-              </p>
-              <div className="mt-7 flex gap-3">
-                <Link
-                  href={hero?.ctaHref || "/events"}
-                  className="rounded-xl bg-amber-300 px-6 py-3 text-sm font-semibold text-neutral-900 hover:bg-amber-200"
-                >
-                  {hero?.ctaText || tr(locale, "View Events", "Эвентүүд")}
-                </Link>
-                <Link
-                  href="/menu/drinks"
-                  className="rounded-xl border border-amber-300/60 px-6 py-3 text-sm font-semibold text-amber-50 hover:bg-amber-300/15"
-                >
-                  {tr(locale, "Drinks Menu", "Уух зүйлсийн меню")}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+      <section className="mx-auto max-w-7xl px-4">
+        <HomeHeroCarousel
+          locale={locale}
+          slides={heroImages}
+          headline={
+            hero?.headline || tr(locale, "Late Night Rhythm", "Шөнийн Хэмнэл")
+          }
+          subheadline={
+            hero?.subheadline ||
+            tr(
+              locale,
+              "Reserve your table for live sets and signature drinks.",
+              "Амьд хөгжмийн үдэшлэгт ширээгээ урьдчилж захиалаарай.",
+            )
+          }
+          ctaHref={hero?.ctaHref || "/events"}
+          ctaText={hero?.ctaText || tr(locale, "View Events", "Эвентүүд")}
+        />
       </section>
 
-      <section className="mx-auto mt-10 grid max-w-6xl gap-8 px-4">
-        <div className="jazz-panel rounded-3xl p-6">
-          <p className="jazz-heading text-amber-200">
-            {tr(locale, "Featured Show", "Онцлох Эвент")}
-          </p>
-          {featured ? (
-            <div className="mt-4">
-              <div className="overflow-hidden rounded-2xl">
-                <img
-                  src={featured.imageUrl || "/galaxy.jpg"}
-                  alt={featured.title}
-                  className="h-64 w-full object-cover"
-                />
+      {galleryImages.length > 0 && (
+        <section className="mx-auto mt-7 max-w-7xl px-4">
+          <div className="jazz-panel rounded-3xl p-5 md:p-7">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="ger-kicker text-amber-200">
+                  {tr(locale, "Gallery", "Галерей")}
+                </p>
+                <h2 className="jazz-heading text-3xl text-amber-50 md:text-4xl">
+                  {tr(locale, " 78MusicBar", "78MusicBar ")}
+                </h2>
               </div>
-              <h2 className="jazz-heading mt-5 text-4xl text-amber-100">
-                {featured.title}
-              </h2>
-              <p className="mt-2 text-amber-50/80">
-                {formatDateTime(featured.startsAt)}
+            </div>
+
+            <div className="mt-5">
+              <HomeGalleryCarousel locale={locale} images={galleryImages} />
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="mx-auto mt-8 max-w-7xl px-4 pb-12">
+        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="space-y-6">
+            <div className="jazz-panel rounded-3xl p-6">
+              <p className="ger-kicker text-amber-200">
+                {tr(locale, "Featured Show", "Онцлох Эвент")}
               </p>
-              <p className="text-amber-50/80">
-                {featured.price.toLocaleString()} {featured.currency} •{" "}
-                {featured.venue}
+              {featured ? (
+                <div className="mt-4">
+                  <div className="overflow-hidden rounded-2xl">
+                    <img
+                      src={featured.imageUrl || "/galaxy.jpg"}
+                      alt={featured.title}
+                      className="h-64 w-full object-cover"
+                    />
+                  </div>
+                  <h2 className="jazz-heading mt-5 text-4xl text-amber-100">
+                    {featured.title}
+                  </h2>
+                  <p className="mt-2 text-amber-50/80">
+                    {formatDateTime(featured.startsAt)}
+                  </p>
+                  <p className="text-amber-50/80">
+                    {featured.price.toLocaleString()} {featured.currency} •{" "}
+                    {featured.venue}
+                  </p>
+                  <Link
+                    href={`/events/${featured.id}/reserve`}
+                    className="ger-btn-secondary mt-5 inline-block rounded-xl px-5 py-3 font-semibold"
+                  >
+                    {tr(locale, "Reserve Table", "Ширээ захиалах")}
+                  </Link>
+                </div>
+              ) : (
+                <p className="mt-3 text-amber-50/70">
+                  {tr(
+                    locale,
+                    "No upcoming featured event yet.",
+                    "Одоогоор онцлох эвент алга.",
+                  )}
+                </p>
+              )}
+            </div>
+
+            <div className="ger-surface rounded-3xl px-4 py-6">
+              <div className="mb-5 flex items-end justify-between">
+                <div>
+                  <p className="ger-kicker">
+                    {tr(locale, "Upcoming", "Удахгүй")}
+                  </p>
+                  <h2 className="jazz-heading text-4xl text-[#2f2116]">
+                    {tr(locale, "Live Schedule", "Хуваарь")}
+                  </h2>
+                </div>
+                <Link
+                  href="/events"
+                  className="text-sm text-[#5a412d] underline underline-offset-4"
+                >
+                  {tr(locale, "All events", "Бүх эвент")}
+                </Link>
+              </div>
+              <UpcomingRow
+                locale={locale}
+                events={[...selectedUpcoming, ...upcoming]
+                  .slice(0, 6)
+                  .map((e) => ({
+                    id: e.id,
+                    title: e.title,
+                    imageUrl: e.imageUrl ?? null,
+                    price: e.price,
+                    currency: e.currency,
+                    venue: e.venue,
+                    startsAt: e.startsAt.toISOString(),
+                  }))}
+              />
+            </div>
+
+            <OpenDeckLineup
+              locale={locale}
+              rows={approvedOpenDeck.map((x) => ({
+                id: x.id,
+                djName: x.djName,
+                genre: x.genre,
+                socialUrl: x.socialUrl,
+                slot: x.slot
+                  ? {
+                      startsAt: x.slot.startsAt.toISOString(),
+                      endsAt: x.slot.endsAt.toISOString(),
+                      day: { eventDate: x.slot.day.eventDate.toISOString() },
+                    }
+                  : null,
+              }))}
+            />
+
+            <ReviewsSection locale={locale} initialReviews={reviews} embedded />
+          </div>
+
+          <div className="space-y-4 xl:sticky xl:top-24 xl:h-fit">
+            <div className="jazz-panel rounded-3xl p-5">
+              <p className="ger-kicker text-amber-200">
+                {tr(locale, "Artist Spotlight", "Artist Spotlight")}
               </p>
+              <h3 className="jazz-heading mt-2 text-3xl text-amber-50">
+                {tr(locale, "Resident Performers", "Манай уран бүтээлчид")}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-amber-100/80">
+                {tr(
+                  locale,
+                  "Meet the DJs, artists, and bands who play at 78MusicBar.",
+                  "78MusicBar дээр тоглодог DJ, artist, band-уудтай танилцаарай.",
+                )}
+              </p>
+              <div className="mt-3 flex items-center justify-between rounded-xl border border-amber-300/30 bg-black/20 px-3 py-2">
+                <p className="text-xs uppercase tracking-[0.14em] text-amber-200/80">
+                  {tr(locale, "Profiles", "Профайл")}
+                </p>
+                <p className="text-xl font-extrabold text-amber-50">
+                  {performerCount}
+                </p>
+              </div>
               <Link
-                href={`/events/${featured.id}/reserve`}
-                className="mt-5 inline-block rounded-xl bg-amber-300 px-5 py-3 font-semibold text-neutral-900 hover:bg-amber-200"
+                href="/collections"
+                className="ger-btn-secondary mt-3 inline-flex rounded-xl px-4 py-2 text-sm font-semibold"
               >
-                {tr(locale, "Reserve Table", "Ширээ захиалах")}
+                {tr(locale, "Open Full Lineup", "Бүх lineup үзэх")}
               </Link>
             </div>
-          ) : (
-            <p className="mt-3 text-amber-50/70">
-              {tr(
-                locale,
-                "No upcoming featured event yet.",
-                "Одоогоор онцлох эвент алга.",
-              )}
-            </p>
-          )}
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-12">
-        <div className="mb-5 flex items-end justify-between">
-          <div>
-            <p className="jazz-heading text-amber-200">
-              {tr(locale, "Upcoming", "Удахгүй")}
-            </p>
-            <h2 className="jazz-heading text-4xl text-amber-50">
-              {tr(locale, "Live Schedule", "Хуваарь")}
-            </h2>
+            <div className="ger-surface rounded-3xl p-3">
+              <CollectionsShowcase groups={performerGroups} compact />
+            </div>
           </div>
-          <Link
-            href="/events"
-            className="text-sm text-amber-100 underline underline-offset-4"
-          >
-            {tr(locale, "All events", "Бүх эвент")}
-          </Link>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[...selectedUpcoming, ...upcoming].slice(0, 6).map((e) => (
-            <EventCard
-              key={e.id}
-              id={e.id}
-              title={e.title}
-              imageUrl={e.imageUrl}
-              price={String(e.price)}
-              currency={e.currency}
-              venue={e.venue}
-              startsAt={e.startsAt}
-              description={e.description}
-            />
-          ))}
         </div>
       </section>
-
-      <ReviewsSection locale={locale} initialReviews={reviews} />
     </main>
   );
 }

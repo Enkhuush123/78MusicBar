@@ -56,7 +56,7 @@ export const EventCard = async (props: Props) => {
           </div>
 
           <div className="mt-4">
-            <Button className="w-full bg-amber-300 text-neutral-900" disabled>
+            <Button className="w-full ger-btn-secondary" disabled>
               {tr(locale, "Coming soon", "Тун удахгүй")}
             </Button>
           </div>
@@ -99,7 +99,7 @@ export const EventCard = async (props: Props) => {
         </div>
 
         <div className="mt-4">
-          <Button asChild className="w-full bg-amber-300 text-neutral-900 hover:bg-amber-200">
+          <Button asChild className="w-full ger-btn-secondary">
             <Link href={`/events/${props.id}/reserve`}>
               {tr(locale, "Reserve table", "Ширээ захиалах")}
             </Link>

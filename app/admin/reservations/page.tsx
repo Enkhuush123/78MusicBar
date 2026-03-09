@@ -219,21 +219,21 @@ export default function AdminReservationsPage() {
   }, [rows]);
 
   return (
-    <section className="jazz-panel rounded-2xl p-6">
+    <section className="jazz-panel reservation-panel rounded-2xl p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="jazz-heading text-amber-200">Bookings</p>
           <h1 className="jazz-heading text-4xl text-amber-50">
             {tr(locale, "Reservations", "Захиалгууд")}
           </h1>
-          <p className="mt-1 text-sm text-amber-100/75">
+          <p className="mt-1 text-sm text-amber-100/90">
             {tr(
               locale,
               "Review • approve payment • cancel • delete • filter reservations",
               "Захиалга хянах • төлбөр батлах • цуцлах • устгах • шүүх",
             )}
           </p>
-          <p className="mt-1 text-xs text-amber-100/60">
+          <p className="mt-1 text-xs text-amber-100/80">
             {tr(locale, "Realtime updates every 5 seconds", "5 секунд тутам realtime шинэчлэгдэнэ")}
           </p>
         </div>
@@ -252,16 +252,16 @@ export default function AdminReservationsPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 rounded-2xl border border-amber-300/25 bg-black/20 p-4 md:grid-cols-[1fr_160px_170px_170px_140px]">
+      <div className="reservation-soft mt-6 grid gap-3 rounded-2xl p-4 md:grid-cols-[1fr_160px_170px_170px_140px]">
         <input
-          className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
+          className="h-11 w-full rounded-xl px-3 text-amber-50"
           placeholder={tr(locale, "Search name / phone / email", "Нэр / утас / email хайх")}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
 
         <select
-          className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
+          className="h-11 rounded-xl px-3 text-amber-50"
           value={status}
           onChange={(e) => setStatus(e.target.value as any)}
         >
@@ -274,13 +274,13 @@ export default function AdminReservationsPage() {
 
         <input
           type="datetime-local"
-          className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
+          className="h-11 rounded-xl px-3 text-amber-50"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
         />
         <input
           type="datetime-local"
-          className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
+          className="h-11 rounded-xl px-3 text-amber-50"
           value={to}
           onChange={(e) => setTo(e.target.value)}
         />
@@ -291,7 +291,7 @@ export default function AdminReservationsPage() {
             "h-11 rounded-xl font-semibold transition",
             loading
               ? "bg-neutral-200 text-neutral-500"
-              : "bg-amber-300 text-neutral-900 hover:bg-amber-200",
+              : "ger-btn-primary",
           )}
           disabled={loading}
         >
@@ -299,11 +299,11 @@ export default function AdminReservationsPage() {
         </button>
       </div>
 
-      {msg && <p className="mt-3 text-sm text-amber-100/80">{msg}</p>}
+      {msg && <p className="mt-3 text-sm text-amber-100">{msg}</p>}
 
       <div className="mt-6 grid gap-3">
         {rows.length === 0 ? (
-          <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-10 text-center text-sm text-amber-100/75">
+          <div className="reservation-soft rounded-2xl p-10 text-center text-sm text-amber-100/90">
             {tr(locale, "No reservations found.", "Захиалга алга.")}
           </div>
         ) : (
@@ -311,7 +311,7 @@ export default function AdminReservationsPage() {
             <div
               key={r.id}
               className={cn(
-                "rounded-2xl border border-amber-300/25 bg-black/20 p-4",
+                "rounded-2xl border border-amber-300/28 bg-[linear-gradient(165deg,rgba(31,23,17,0.84)_0%,rgba(22,16,12,0.84)_100%)] p-4",
                 r.status === "cancelled" && "opacity-70",
               )}
             >
@@ -329,13 +329,13 @@ export default function AdminReservationsPage() {
                             ? tr(locale, " • (rejected)", " • (татгалзсан)")
                             : ""}
                   </p>
-                  <p className="text-xs text-amber-100/70">
+                  <p className="text-xs text-amber-100/90">
                     {fmt(r.reservedFor)} • {tr(locale, "Table", "Ширээ")} #{r.tableNo} • {r.guests} {tr(locale, "people", "хүн")}
                   </p>
-                  <p className="truncate text-xs text-amber-100/70">
+                  <p className="truncate text-xs text-amber-100/90">
                     {r.name || r.userEmail || "—"} • {r.phone || r.userPhone || "—"}
                   </p>
-                  <p className="mt-1 text-xs text-amber-100/70">
+                  <p className="mt-1 text-xs text-amber-100/90">
                     {tr(locale, "Payment ref", "Төлбөрийн код")}:{" "}
                     <span className="font-semibold text-amber-200">
                       RSV-T{r.tableNo}-{r.id.slice(0, 8).toUpperCase()}
@@ -345,7 +345,7 @@ export default function AdminReservationsPage() {
                       {((r.event?.price || 0) * r.guests).toLocaleString()} {r.event?.currency || "MNT"}
                     </span>
                   </p>
-                  <p className="mt-1 text-xs text-amber-100/60">
+                  <p className="mt-1 text-xs text-amber-100/80">
                     {tr(locale, "Booked", "Үүсгэсэн")}: {fmt(r.createdAt)} •{" "}
                     {tr(locale, "Updated", "Шинэчилсэн")}: {fmt(r.updatedAt)} •{" "}
                     {tr(locale, "Venue", "Байршил")}: {r.event?.venue || "78MusicBar"}
@@ -361,7 +361,7 @@ export default function AdminReservationsPage() {
                   {r.status === "pending_payment" && (
                     <button
                       onClick={() => approve(r.id)}
-                      className="h-9 rounded-xl border border-emerald-300/50 px-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/15 transition"
+                      className="h-9 rounded-xl border border-emerald-300/50 bg-emerald-500/10 px-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/20"
                     >
                       {tr(locale, "Approve", "Батлах")}
                     </button>
@@ -369,7 +369,7 @@ export default function AdminReservationsPage() {
                   {r.status === "pending_payment" && (
                     <button
                       onClick={() => reject(r.id)}
-                      className="h-9 rounded-xl border border-red-300/50 px-3 text-sm font-semibold text-red-100 hover:bg-red-300/15 transition"
+                      className="h-9 rounded-xl border border-red-300/55 bg-red-500/10 px-3 text-sm font-semibold text-red-100 transition hover:bg-red-300/20"
                     >
                       {tr(locale, "Reject", "Татгалзах")}
                     </button>
@@ -378,21 +378,21 @@ export default function AdminReservationsPage() {
                   {r.status !== "cancelled" ? (
                     <button
                       onClick={() => askCancel(r.id)}
-                      className="h-9 rounded-xl border border-amber-300/40 px-3 text-sm font-semibold text-amber-50 hover:bg-amber-300/15 transition"
+                      className="ger-btn-secondary h-9 rounded-xl px-3 text-sm font-semibold"
                     >
                       {tr(locale, "Cancel", "Цуцлах")}
                     </button>
                   ) : (
                     <button
                       onClick={() => restore(r.id)}
-                      className="h-9 rounded-xl border border-amber-300/40 px-3 text-sm font-semibold text-amber-50 hover:bg-amber-300/15 transition"
+                      className="ger-btn-secondary h-9 rounded-xl px-3 text-sm font-semibold"
                     >
                       {tr(locale, "Restore", "Буцаах")}
                     </button>
                   )}
                   <button
                     onClick={() => askDelete(r.id)}
-                    className="h-9 rounded-xl border border-red-300/50 px-3 text-sm font-semibold text-red-100 hover:bg-red-300/15 transition"
+                    className="h-9 rounded-xl border border-red-300/55 bg-red-500/10 px-3 text-sm font-semibold text-red-100 transition hover:bg-red-300/20"
                   >
                     {tr(locale, "Delete", "Устгах")}
                   </button>
@@ -405,14 +405,14 @@ export default function AdminReservationsPage() {
 
       {confirmDialog.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-amber-300/30 bg-neutral-950 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-amber-300/35 bg-[linear-gradient(165deg,rgba(35,26,20,0.98)_0%,rgba(26,20,15,0.98)_100%)] p-6 shadow-2xl">
             <p className="jazz-heading text-2xl text-amber-100">{confirmDialog.title}</p>
             <p className="mt-3 text-sm text-amber-100/85">{confirmDialog.body}</p>
             <div className="mt-6 flex gap-2">
               <button
                 type="button"
                 onClick={closeConfirm}
-                className="h-10 flex-1 rounded-xl border border-amber-300/40 text-amber-50 transition hover:bg-amber-300/15"
+                className="ger-btn-secondary h-10 flex-1 rounded-xl"
               >
                 {tr(locale, "Back", "Буцах")}
               </button>
@@ -423,7 +423,7 @@ export default function AdminReservationsPage() {
                   "h-10 flex-1 rounded-xl font-semibold transition",
                   confirmDialog.tone === "red"
                     ? "bg-red-400 text-neutral-900 hover:bg-red-300"
-                    : "bg-amber-300 text-neutral-900 hover:bg-amber-200",
+                    : "ger-btn-primary",
                 )}
               >
                 {confirmDialog.confirmLabel}
@@ -438,7 +438,7 @@ export default function AdminReservationsPage() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-amber-300/30 bg-black/20 px-4 py-3">
+    <div className="rounded-2xl border border-amber-300/26 bg-[linear-gradient(150deg,rgba(25,18,13,0.72)_0%,rgba(16,12,9,0.72)_100%)] px-4 py-3">
       <p className="text-xs font-semibold text-amber-100/70">{label}</p>
       <p className="text-xl font-extrabold text-amber-50">{value}</p>
     </div>

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "./components/header";
 import { Footer } from "./components/footer";
 import { getServerLocale } from "@/lib/i18n-server";
+import GlobalImageLightbox from "./components/global-image-lightbox";
 
 const display = Bebas_Neue({
   variable: "--font-display",
@@ -18,8 +19,8 @@ const body = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "78 Music Bar",
-  description: "Live jazz nights, dinner, and reservations at 78 Music Bar.",
+  title: "78MusicBar",
+  description: "Live music nights, events, and reservations at 78MusicBar.",
 };
 
 export default async function RootLayout({
@@ -38,6 +39,7 @@ export default async function RootLayout({
 
         {children}
         <Footer locale={locale} />
+        <GlobalImageLightbox />
       </body>
     </html>
   );

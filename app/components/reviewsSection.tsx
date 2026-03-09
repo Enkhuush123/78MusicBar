@@ -14,9 +14,14 @@ type Review = {
 type Props = {
   locale: Locale;
   initialReviews: Review[];
+  embedded?: boolean;
 };
 
-export default function ReviewsSection({ locale, initialReviews }: Props) {
+export default function ReviewsSection({
+  locale,
+  initialReviews,
+  embedded = false,
+}: Props) {
   const [reviews] = useState<Review[]>(initialReviews);
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(5);
@@ -73,10 +78,10 @@ export default function ReviewsSection({ locale, initialReviews }: Props) {
   };
 
   return (
-    <section className="mx-auto max-w-6xl px-4 pb-12">
+    <section className={embedded ? "" : "mx-auto max-w-6xl px-4 pb-12"}>
       <div className="jazz-panel rounded-3xl p-6 md:p-8">
         <div className="mb-5">
-          <p className="jazz-heading text-amber-200">
+          <p className="ger-kicker text-amber-200">
             {tr(locale, "Community", "Хэрэглэгчдийн Сэтгэгдэл")}
           </p>
           <h2 className="jazz-heading text-4xl text-amber-50">
@@ -140,7 +145,7 @@ export default function ReviewsSection({ locale, initialReviews }: Props) {
             <button
               onClick={submit}
               disabled={saving}
-              className="rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-amber-200"
+              className="ger-btn-secondary rounded-xl px-4 py-2 text-sm font-semibold"
             >
               {saving
                 ? tr(locale, "Submitting...", "Илгээж байна...")

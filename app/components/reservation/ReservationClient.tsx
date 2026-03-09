@@ -109,7 +109,7 @@ function ZoneBlock({
   locale: "en" | "mn";
 }) {
   return (
-    <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
+    <div className="reservation-soft rounded-2xl p-4">
       <p className="mb-3 text-sm font-semibold text-amber-100/70">{title}</p>
 
       <div className="grid grid-cols-2 gap-3">
@@ -127,11 +127,11 @@ function ZoneBlock({
               className={cn(
                 "rounded-xl border p-3 text-left transition",
                 isReserved &&
-                  "cursor-not-allowed border-neutral-600 bg-neutral-800 text-neutral-400",
+                  "cursor-not-allowed border-neutral-500/50 bg-neutral-900/50 text-neutral-400",
                 !isReserved &&
                   !isSelected &&
-                  "border-amber-300/30 bg-black/30 text-amber-50 hover:border-amber-300/60",
-                isSelected && "border-amber-300 bg-amber-300 text-neutral-900",
+                  "border-amber-300/30 bg-black/25 text-amber-50 hover:border-amber-300/60 hover:bg-amber-300/15",
+                isSelected && "border-amber-200 bg-[linear-gradient(180deg,#f5d7aa_0%,#e9b873_100%)] text-neutral-900",
               )}
             >
               <div className="flex items-center justify-between text-xs font-semibold">
@@ -187,6 +187,7 @@ export default function ReservationClient({
   const [paymentTicket, setPaymentTicket] = useState<PaymentTicket | null>(
     null,
   );
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const [reservedForLocal, setReservedForLocal] = useState(() => {
     const d = new Date(startsAt);
@@ -326,6 +327,7 @@ export default function ReservationClient({
             reference,
             status: "pending_payment",
           });
+          setPaymentDialogOpen(true);
         }
 
         await refreshReserved();
@@ -430,9 +432,22 @@ export default function ReservationClient({
     };
   }, [paymentTicket, token]);
 
+  useEffect(() => {
+    if (!paymentDialogOpen || !paymentTicket) return;
+    if (paymentTicket.status !== "confirmed") return;
+
+    const timer = setTimeout(async () => {
+      setPaymentDialogOpen(false);
+      await refreshReserved();
+    }, 1400);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentDialogOpen, paymentTicket?.status]);
+
   return (
-    <main className="mx-auto max-w-6xl px-4 py-20">
-      <section className="jazz-panel mb-8 overflow-hidden rounded-2xl">
+    <main className="reservation-shell mx-auto max-w-6xl px-4 py-20">
+      <section className="reservation-panel mb-8 overflow-hidden rounded-2xl">
         <div className="grid md:grid-cols-[260px_1fr]">
           <div className="relative h-52 md:h-full">
             {eventImageUrl ? (
@@ -442,7 +457,7 @@ export default function ReservationClient({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-black/30 text-sm text-amber-100/70">
+              <div className="reservation-soft flex h-full w-full items-center justify-center text-sm text-amber-100/70">
                 {tr(locale, "No image", "Зураг алга")}
               </div>
             )}
@@ -491,8 +506,8 @@ export default function ReservationClient({
       </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
-          <div className="mb-4 rounded-xl bg-amber-300 py-3 text-center text-sm font-semibold text-neutral-900">
+        <div className="reservation-panel rounded-2xl p-4">
+          <div className="mb-4 rounded-xl bg-[linear-gradient(180deg,#f5d7aa_0%,#e9b873_100%)] py-3 text-center text-sm font-semibold text-neutral-900">
             {tr(locale, "STAGE", "ТАЙЗ")}
           </div>
 
@@ -534,18 +549,18 @@ export default function ReservationClient({
             </div>
           </div>
 
-          <div className="mt-4 rounded-xl border border-amber-300/25 bg-black/30 py-3 text-center text-sm text-amber-50">
+          <div className="reservation-soft mt-4 rounded-xl py-3 text-center text-sm text-amber-50">
             {tr(locale, "ENTRANCE", "ОРЦ")}
           </div>
         </div>
 
-        <div className="jazz-panel rounded-2xl p-5 shadow-sm">
+        <div className="reservation-panel rounded-2xl p-5 shadow-sm">
           <h3 className="jazz-heading text-2xl text-amber-50">
             {tr(locale, "Reservation Details", "Захиалгын мэдээлэл")}
           </h3>
 
           <div className="mt-4 grid gap-3">
-            <div className="rounded-xl border border-amber-300/25 bg-black/20 px-4 py-3">
+            <div className="reservation-soft rounded-xl px-4 py-3">
               <p className="text-sm text-amber-100/70">
                 {tr(locale, "Date / Time", "Огноо / цаг")}
               </p>
@@ -553,7 +568,7 @@ export default function ReservationClient({
                 type="datetime-local"
                 value={reservedForLocal}
                 onChange={(e) => setReservedForLocal(e.target.value)}
-                className="mt-2 w-full rounded-md border border-amber-300/30 bg-black/30 px-3 py-2 text-amber-50"
+                className="mt-2 w-full rounded-md px-3 py-2 text-amber-50"
               />
               <p className="mt-2 text-xs text-amber-100/70">
                 {isLoggedIn
@@ -570,7 +585,7 @@ export default function ReservationClient({
               </p>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl border border-amber-300/25 bg-black/20 px-4 py-3 text-sm">
+            <div className="reservation-soft flex items-center justify-between rounded-xl px-4 py-3 text-sm">
               <span className="text-amber-100/70">
                 {tr(locale, "Selected table", "Сонгосон ширээ")}
               </span>
@@ -579,7 +594,7 @@ export default function ReservationClient({
               </span>
             </div>
 
-            <div className="rounded-xl border border-amber-300/25 bg-black/20 px-4 py-3">
+            <div className="reservation-soft rounded-xl px-4 py-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-amber-100/70">
                   {tr(locale, "Guests", "Хүний тоо")}
@@ -616,32 +631,32 @@ export default function ReservationClient({
 
             {!isLoggedIn && (
               <>
-                <div className="rounded-xl border border-amber-300/25 bg-black/20 px-4 py-3">
+                <div className="reservation-soft rounded-xl px-4 py-3">
                   <p className="text-sm text-amber-100/70">
                     {tr(locale, "Name", "Нэр")}
                   </p>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="mt-2 w-full rounded-md border border-amber-300/30 bg-black/30 px-3 py-2 text-amber-50"
+                    className="mt-2 w-full rounded-md px-3 py-2 text-amber-50"
                   />
                 </div>
 
-                <div className="rounded-xl border border-amber-300/25 bg-black/20 px-4 py-3">
+                <div className="reservation-soft rounded-xl px-4 py-3">
                   <p className="text-sm text-amber-100/70">
                     {tr(locale, "Phone", "Утас")}
                   </p>
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="mt-2 w-full rounded-md border border-amber-300/30 bg-black/30 px-3 py-2 text-amber-50"
+                    className="mt-2 w-full rounded-md px-3 py-2 text-amber-50"
                   />
                 </div>
               </>
             )}
           </div>
 
-          <div className="mt-4 rounded-xl border border-red-300/30 bg-red-500/10 p-3 text-xs text-red-100">
+          <div className="mt-4 rounded-xl border border-red-300/35 bg-red-500/10 p-3 text-xs text-red-100">
             <p className="font-semibold">
               {tr(locale, "Reservation Policy", "Захиалгын нөхцөл")}
             </p>
@@ -660,7 +675,7 @@ export default function ReservationClient({
             className={cn(
               "mt-6 h-11 w-full rounded-xl font-medium transition",
               current && !loading
-                ? "bg-amber-300 text-neutral-900 hover:bg-amber-200"
+                ? "ger-btn-primary"
                 : "bg-neutral-200 text-neutral-400",
             )}
             onClick={handleReserve}
@@ -676,7 +691,7 @@ export default function ReservationClient({
 
           <button
             type="button"
-            className="mt-3 h-10 w-full rounded-xl border border-amber-300/40 text-amber-50 transition hover:bg-amber-300/15"
+            className="ger-btn-secondary mt-3 h-10 w-full rounded-xl"
             onClick={refreshReserved}
           >
             {tr(locale, "Refresh Status", "Статус шинэчлэх")}
@@ -685,96 +700,20 @@ export default function ReservationClient({
           {msg && <p className="mt-3 text-sm text-amber-100/80">{msg}</p>}
 
           {paymentTicket && (
-            <div
-              className={cn(
-                "mt-4 rounded-xl border p-4",
-                paymentTicket.status === "confirmed" &&
-                  "border-emerald-300/50 bg-emerald-500/15 text-emerald-100",
-                paymentTicket.status === "pending_payment" &&
-                  "border-amber-300/40 bg-amber-500/10 text-amber-100",
-                paymentTicket.status === "rejected" &&
-                  "border-red-300/50 bg-red-500/15 text-red-100",
-                paymentTicket.status === "cancelled" &&
-                  "border-neutral-300/40 bg-neutral-500/15 text-neutral-100",
-              )}
+            <button
+              type="button"
+              className="ger-btn-secondary mt-4 h-10 w-full rounded-xl"
+              onClick={() => setPaymentDialogOpen(true)}
             >
-              <p className="text-sm font-semibold">
-                {paymentTicket.status === "confirmed"
-                  ? tr(locale, "Reservation Confirmed", "Захиалга баталгаажсан")
-                  : paymentTicket.status === "pending_payment"
-                    ? tr(
-                        locale,
-                        "Payment Pending Approval",
-                        "Төлбөр шалгагдах хүлээлттэй",
-                      )
-                    : paymentTicket.status === "rejected"
-                      ? tr(locale, "Payment Rejected", "Төлбөр татгалзсан")
-                      : tr(
-                          locale,
-                          "Reservation Cancelled",
-                          "Захиалга цуцлагдсан",
-                        )}
-              </p>
-              <div className="mt-2 space-y-1 text-xs">
-                <p>
-                  {tr(locale, "Amount", "Дүн")}:{" "}
-                  <span className="font-semibold">
-                    {paymentTicket.amount.toLocaleString()}{" "}
-                    {paymentTicket.currency}
-                  </span>
-                </p>
-                <p>
-                  {tr(locale, "Bank", "Банк")}:{" "}
-                  <span className="font-semibold">{BANK_NAME}</span>
-                </p>
-                <p>
-                  {tr(locale, "Account Name", "Данс эзэмшигч")}:{" "}
-                  <span className="font-semibold">{BANK_ACCOUNT_NAME}</span>
-                </p>
-                <p>
-                  {tr(locale, "Account Number", "Данс")}:{" "}
-                  <span className="font-semibold">{BANK_ACCOUNT_NO}</span>
-                </p>
-                <p>
-                  {tr(locale, "Payment reference", "Гүйлгээний утга")}:{" "}
-                  <span className="font-semibold">
-                    {paymentTicket.reference}
-                  </span>
-                </p>
-              </div>
-              <p className="mt-3 text-xs">
-                {paymentTicket.status === "confirmed"
-                  ? tr(
-                      locale,
-                      "Admin approved your payment. Your reservation is active.",
-                      "Админ таны төлбөрийг баталгаажууллаа. Таны захиалга идэвхтэй.",
-                    )
-                  : paymentTicket.status === "pending_payment"
-                    ? tr(
-                        locale,
-                        "After transfer, admin checks your payment and approves your reservation.",
-                        "Төлбөр шилжүүлсний дараа админ шалгаад таны захиалгыг баталгаажуулна.",
-                      )
-                    : paymentTicket.status === "rejected"
-                      ? tr(
-                          locale,
-                          "Payment was rejected by admin. Please contact support.",
-                          "Төлбөрийг админ татгалзсан байна. Холбогдоно уу.",
-                        )
-                      : tr(
-                          locale,
-                          "Reservation was cancelled by admin.",
-                          "Захиалгыг админ цуцалсан байна.",
-                        )}
-              </p>
-            </div>
+              {tr(locale, "Open Payment Status", "Төлбөрийн төлөв харах")}
+            </button>
           )}
         </div>
       </div>
 
       {policyOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-amber-300/30 bg-neutral-950 p-6">
+          <div className="w-full max-w-lg rounded-2xl border border-amber-300/35 bg-[linear-gradient(165deg,rgba(35,26,20,0.98)_0%,rgba(26,20,15,0.98)_100%)] p-6">
             <p className="jazz-heading text-xl text-amber-100">
               {tr(locale, "Before Payment", "Төлбөр хийхийн өмнө")}
             </p>
@@ -788,18 +727,117 @@ export default function ReservationClient({
             <div className="mt-5 flex gap-2">
               <button
                 type="button"
-                className="h-10 flex-1 rounded-xl border border-amber-300/40 text-amber-50 transition hover:bg-amber-300/15"
+                className="ger-btn-secondary h-10 flex-1 rounded-xl"
                 onClick={() => setPolicyOpen(false)}
               >
                 {tr(locale, "Cancel", "Болих")}
               </button>
               <button
                 type="button"
-                className="h-10 flex-1 rounded-xl bg-amber-300 font-semibold text-neutral-900 transition hover:bg-amber-200"
+                className="ger-btn-primary h-10 flex-1 rounded-xl font-semibold"
                 onClick={agreePolicyAndReserve}
                 disabled={loading}
               >
                 {tr(locale, "I Agree", "Зөвшөөрч байна")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {paymentDialogOpen && paymentTicket && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-amber-300/35 bg-[linear-gradient(165deg,rgba(35,26,20,0.98)_0%,rgba(26,20,15,0.98)_100%)] p-6">
+            <p className="jazz-heading text-2xl text-amber-100">
+              {tr(locale, "Payment Details", "Төлбөрийн мэдээлэл")}
+            </p>
+
+            <div className="mt-3 space-y-1 text-sm text-amber-100/90">
+              <p>
+                {tr(locale, "Amount", "Дүн")}:{" "}
+                <span className="font-semibold">
+                  {paymentTicket.amount.toLocaleString()} {paymentTicket.currency}
+                </span>
+              </p>
+              <p>
+                {tr(locale, "Bank", "Банк")}:{" "}
+                <span className="font-semibold">{BANK_NAME}</span>
+              </p>
+              <p>
+                {tr(locale, "Account Name", "Данс эзэмшигч")}:{" "}
+                <span className="font-semibold">{BANK_ACCOUNT_NAME}</span>
+              </p>
+              <p>
+                {tr(locale, "Account Number", "Данс")}:{" "}
+                <span className="font-semibold">{BANK_ACCOUNT_NO}</span>
+              </p>
+              <p>
+                {tr(locale, "Payment reference", "Гүйлгээний утга")}:{" "}
+                <span className="font-semibold">{paymentTicket.reference}</span>
+              </p>
+            </div>
+
+            <div className="reservation-soft mt-4 rounded-xl p-3">
+              {paymentTicket.status === "pending_payment" && (
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-300/30 border-t-amber-200" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-100">
+                      {tr(locale, "Please wait...", "Түр хүлээнэ үү...")}
+                    </p>
+                    <p className="text-xs text-amber-100/75">
+                      {tr(
+                        locale,
+                        "Waiting for admin payment approval.",
+                        "Админы төлбөрийн баталгаажуулалтыг хүлээж байна.",
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {paymentTicket.status === "confirmed" && (
+                <div>
+                  <p className="text-sm font-semibold text-emerald-300">
+                    {tr(locale, "Confirmed", "Баталгаажсан")}
+                  </p>
+                  <p className="text-xs text-amber-100/75">
+                    {tr(
+                      locale,
+                      "Payment approved. Reservation section is refreshing.",
+                      "Төлбөр баталгаажлаа. Захиалгын хэсгийг шинэчилж байна.",
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {paymentTicket.status === "rejected" && (
+                <p className="text-sm font-semibold text-red-300">
+                  {tr(locale, "Payment Rejected", "Төлбөр татгалзсан")}
+                </p>
+              )}
+
+              {paymentTicket.status === "cancelled" && (
+                <p className="text-sm font-semibold text-neutral-200">
+                  {tr(locale, "Reservation Cancelled", "Захиалга цуцлагдсан")}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                className="ger-btn-secondary h-10 flex-1 rounded-xl"
+                onClick={() => setPaymentDialogOpen(false)}
+              >
+                {tr(locale, "Close", "Хаах")}
+              </button>
+              <button
+                type="button"
+                className="ger-btn-primary h-10 flex-1 rounded-xl font-semibold"
+                onClick={refreshReserved}
+              >
+                {tr(locale, "Refresh", "Шинэчлэх")}
               </button>
             </div>
           </div>

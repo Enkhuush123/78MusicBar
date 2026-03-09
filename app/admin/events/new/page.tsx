@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useLocale } from "@/app/components/use-locale";
 import { tr } from "@/lib/i18n";
+import { uploadAdminImage } from "@/lib/client-image-upload";
 
 const cn = (...s: (string | false | undefined)[]) =>
   s.filter(Boolean).join(" ");
@@ -30,22 +31,13 @@ export default function AdminNewEventPage() {
     setMsg(null);
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setMsg(data?.message || tr(locale, "Upload failed", "Зураг оруулахад алдаа гарлаа"));
-        return;
-      }
-
-      const data = (await res.json()) as { url: string };
-      setImageUrl(data.url);
+      const up = await uploadAdminImage(file);
+      setImageUrl(up.url);
+    } catch (error) {
+      setMsg(
+        String((error as Error)?.message ?? "") ||
+          tr(locale, "Upload failed", "Зураг оруулахад алдаа гарлаа"),
+      );
     } finally {
       setUploading(false);
     }

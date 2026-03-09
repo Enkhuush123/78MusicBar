@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale } from "@/app/components/use-locale";
 import { tr } from "@/lib/i18n";
+import { uploadAdminImage } from "@/lib/client-image-upload";
 
 const cn = (...s: (string | false | undefined)[]) =>
   s.filter(Boolean).join(" ");
@@ -68,30 +69,14 @@ export default function AdminEditEventPage() {
     setUploading(true);
 
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setUploadMsg(data?.message || tr(locale, "Upload failed", "Зураг оруулахад алдаа гарлаа"));
-        return null;
-      }
-
-      const data = (await res.json()) as { url?: string; publicId?: string };
-      if (!data?.url) {
-        setUploadMsg(tr(locale, "Upload failed: no url", "Зураг оруулахад алдаа гарлаа: холбоос алга"));
-        return null;
-      }
-
+      const up = await uploadAdminImage(file);
       setUploadMsg("✅ Image uploaded");
-      return data.url;
-    } catch {
-      setUploadMsg(tr(locale, "Upload failed", "Зураг оруулахад алдаа гарлаа"));
+      return up.url;
+    } catch (error) {
+      setUploadMsg(
+        String((error as Error)?.message ?? "") ||
+          tr(locale, "Upload failed", "Зураг оруулахад алдаа гарлаа"),
+      );
       return null;
     } finally {
       setUploading(false);
@@ -104,17 +89,6 @@ export default function AdminEditEventPage() {
 
     if (!f.type.startsWith("image/")) {
       setUploadMsg(tr(locale, "Please select an image file (png/jpg/webp...)", "Зөвхөн зураг сонгоно уу (png/jpg/webp...)"));
-      return;
-    }
-    const maxMB = 8;
-    if (f.size > maxMB * 1024 * 1024) {
-      setUploadMsg(
-        tr(
-          locale,
-          `Image is too large (under ${maxMB}MB).`,
-          `Зураг хэт том байна (${maxMB}MB-с бага байлга).`,
-        ),
-      );
       return;
     }
 

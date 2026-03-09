@@ -103,8 +103,8 @@ export default function ReservationRoot() {
   );
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pt-24 pb-16">
-      <section className="jazz-panel rounded-2xl p-6">
+    <main className="reservation-shell mx-auto max-w-6xl px-4 pt-24 pb-16">
+      <section className="reservation-panel rounded-2xl p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="jazz-heading text-amber-200">
@@ -119,14 +119,14 @@ export default function ReservationRoot() {
           </div>
           <button
             onClick={load}
-            className="h-10 rounded-xl border border-amber-300/40 px-4 text-sm font-semibold text-amber-50 transition hover:bg-amber-300/15"
+            className="ger-btn-secondary h-10 rounded-xl px-4 text-sm font-semibold"
           >
             {tr(locale, "Refresh", "Шинэчлэх")}
           </button>
         </div>
 
         {!loggedIn && !loading ? (
-          <div className="mt-6 rounded-2xl border border-amber-300/25 bg-black/20 p-8 text-center">
+          <div className="reservation-soft mt-6 rounded-2xl p-8 text-center">
             <p className="text-amber-100/80">
               {tr(locale, "Please login to see your reservations.", "Захиалгаа харахын тулд нэвтэрнэ үү.")}
             </p>
@@ -152,11 +152,11 @@ export default function ReservationRoot() {
 
         <div className="mt-6 grid gap-3">
           {loading ? (
-            <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-8 text-center text-amber-100/80">
+            <div className="reservation-soft rounded-2xl p-8 text-center text-amber-100/80">
               {tr(locale, "Loading...", "Уншиж байна...")}
             </div>
           ) : rows.length === 0 ? (
-            <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-8 text-center text-amber-100/80">
+            <div className="reservation-soft rounded-2xl p-8 text-center text-amber-100/80">
               {tr(locale, "No reservations yet.", "Одоогоор захиалга алга.")}
             </div>
           ) : (
@@ -167,7 +167,7 @@ export default function ReservationRoot() {
                 <article
                   key={r.id}
                   className={cn(
-                    "rounded-2xl border bg-black/20 p-4",
+                    "rounded-2xl border bg-[linear-gradient(165deg,rgba(30,23,17,0.82)_0%,rgba(22,16,12,0.84)_100%)] p-4",
                     r.status === "confirmed"
                       ? "border-emerald-300/45 shadow-[0_0_0_1px_rgba(110,231,183,0.2)]"
                       : "border-amber-300/25",
@@ -211,7 +211,7 @@ export default function ReservationRoot() {
 
                   {r.event?.id ? (
                     <Link
-                      className="mt-3 inline-flex rounded-lg border border-amber-300/40 px-3 py-1.5 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/15"
+                      className="ger-btn-secondary mt-3 inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold"
                       href={`/events/${r.event.id}/reserve`}
                     >
                       {tr(locale, "Open Event", "Эвент рүү орох")}

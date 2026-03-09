@@ -134,3 +134,96 @@ model Review {
 
   @@index([isApproved, createdAt])
 }
+
+model CollectionCategory {
+  id        String   @id @default(uuid())
+  nameEn    String
+  nameMn    String
+  sort      Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     CollectionItem[]
+
+  @@index([isActive, sort])
+}
+
+model CollectionItem {
+  id         String             @id @default(uuid())
+  categoryId String
+  category   CollectionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  nameEn     String
+  nameMn     String
+  infoEn     String
+  infoMn     String
+  imageUrl   String?
+  sort       Int                @default(0)
+  isActive   Boolean            @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId, isActive, sort])
+}
+
+enum OpenDeckStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+model OpenDeckReservation {
+  id            String         @id @default(uuid())
+  slotId        String?        @unique
+  slot          OpenDeckSlot?  @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  userId        String?
+  userEmail     String?
+  requesterName String
+  phone         String
+  djName        String
+  genre         String
+  setDuration   Int            @default(60)
+  preferredDate DateTime
+  preferredTime String?
+  socialUrl     String?
+  note          String?
+  status        OpenDeckStatus @default(pending)
+  adminNote     String?
+  approvedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([status, preferredDate])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([userEmail])
+  @@index([slotId])
+}
+
+model OpenDeckDay {
+  id        String         @id @default(uuid())
+  eventDate DateTime       @unique
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  slots     OpenDeckSlot[]
+
+  @@index([eventDate, isActive])
+}
+
+model OpenDeckSlot {
+  id        String               @id @default(uuid())
+  dayId     String
+  day       OpenDeckDay          @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  startsAt  DateTime
+  endsAt    DateTime
+  sort      Int                  @default(0)
+  isOpen    Boolean              @default(true)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  reservation OpenDeckReservation?
+
+  @@unique([dayId, sort])
+  @@index([dayId, startsAt, isOpen])
+}

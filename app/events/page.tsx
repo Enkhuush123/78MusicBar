@@ -13,17 +13,17 @@ export default async function EventsPage() {
   return (
     <main className="pt-24">
       <section className="mx-auto max-w-6xl px-4">
-        <div className="jazz-shell rounded-3xl p-8 md:p-10">
-          <p className="jazz-heading text-amber-200">
+        <div className="ger-surface rounded-3xl p-8 md:p-10">
+          <p className="ger-kicker">
             {tr(locale, "Calendar", "Хуваарь")}
           </p>
-          <h1 className="jazz-heading text-5xl text-amber-50 md:text-7xl">
+          <h1 className="jazz-heading text-5xl text-[#2f2116] md:text-7xl">
             {tr(locale, "Events", "Эвентүүд")}
           </h1>
-          <p className="mt-3 max-w-2xl text-xl text-amber-100/85">
+          <p className="mt-3 max-w-2xl text-xl text-[#5a412d]">
             {tr(
               locale,
-              "Upcoming live performances and special events at 78 Music Bar.",
+              "Upcoming live performances and special events at 78MusicBar.",
               "Удахгүй болох амьд хөгжмийн тоглолтууд ба Эвентүүд.",
             )}
           </p>
@@ -32,7 +32,7 @@ export default async function EventsPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-10">
         {events.length === 0 ? (
-          <div className="jazz-panel rounded-2xl p-10 text-center text-amber-100/80">
+          <div className="ger-surface rounded-2xl p-10 text-center text-[#5a412d]">
             {tr(
               locale,
               "No upcoming events yet.",

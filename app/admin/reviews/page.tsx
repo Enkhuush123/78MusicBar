@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { tr } from "@/lib/i18n";
 import { useLocale } from "@/app/components/use-locale";
+import AdminConfirmDialog from "@/app/components/admin-confirm-dialog";
 
 type Review = {
   id: string;
@@ -25,6 +26,7 @@ export default function AdminReviewsPage() {
   const [rows, setRows] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,10 +58,18 @@ export default function AdminReviewsPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm(tr(locale, "Delete this review?", "Энэ сэтгэгдлийг устгах уу?"))) return;
     const res = await fetch(`/api/admin/reviews/${id}`, { method: "DELETE" });
     if (!res.ok) return setMsg(tr(locale, "Delete failed", "Устгахад алдаа гарлаа"));
     await load();
+  };
+
+  const askRemove = (id: string) => setDeleteId(id);
+  const closeConfirm = () => setDeleteId(null);
+  const runConfirm = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    closeConfirm();
+    await remove(id);
   };
 
   const counts = useMemo(() => {
@@ -133,7 +143,7 @@ export default function AdminReviewsPage() {
                 </button>
               )}
               <button
-                onClick={() => remove(r.id)}
+                onClick={() => askRemove(r.id)}
                 className="rounded-xl border border-amber-300/40 px-3 py-2 text-sm text-amber-50"
               >
                 {tr(locale, "Delete", "Устгах")}
@@ -142,6 +152,21 @@ export default function AdminReviewsPage() {
           </div>
         ))}
       </div>
+      <AdminConfirmDialog
+        open={!!deleteId}
+        locale={locale}
+        title={tr(locale, "Delete this review?", "Энэ сэтгэгдлийг устгах уу?")}
+        body={tr(
+          locale,
+          "This review will be permanently deleted.",
+          "Энэ сэтгэгдэл бүр мөсөн устна.",
+        )}
+        tone="red"
+        confirmLabel={tr(locale, "Delete", "Устгах")}
+        cancelLabel={tr(locale, "Back", "Буцах")}
+        onCancel={closeConfirm}
+        onConfirm={() => void runConfirm()}
+      />
     </section>
   );
 }
