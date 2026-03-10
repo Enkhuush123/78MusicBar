@@ -251,8 +251,8 @@ export default async function HomePage() {
   ).slice(0, 18);
 
   return (
-    <main className="pt-20">
-      <section className="mx-auto max-w-7xl px-4">
+    <main className="pt-16 sm:pt-20">
+      <section className="mx-auto max-w-7xl px-3 sm:px-4">
         <HomeHeroCarousel
           locale={locale}
           slides={heroImages}
@@ -273,30 +273,30 @@ export default async function HomePage() {
       </section>
 
       {galleryImages.length > 0 && (
-        <section className="mx-auto mt-7 max-w-7xl px-4">
-          <div className="jazz-panel rounded-3xl p-5 md:p-7">
+        <section className="mx-auto mt-7 max-w-7xl px-3 sm:px-4">
+          <div className="jazz-panel rounded-3xl p-4 sm:p-5 md:p-7">
             <div className="flex items-end justify-between gap-3">
               <div>
                 <p className="ger-kicker text-amber-200">
                   {tr(locale, "Gallery", "Галерей")}
                 </p>
-                <h2 className="jazz-heading text-3xl text-amber-50 md:text-4xl">
+                <h2 className="jazz-heading text-2xl text-amber-50 sm:text-3xl md:text-4xl">
                   {tr(locale, " 78MusicBar", "78MusicBar ")}
                 </h2>
               </div>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-4 sm:mt-5">
               <HomeGalleryCarousel locale={locale} images={galleryImages} />
             </div>
           </div>
         </section>
       )}
 
-      <section className="mx-auto mt-8 max-w-7xl px-4 pb-12">
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+      <section className="mx-auto mt-8 max-w-7xl px-3 pb-12 sm:px-4">
+        <div className="grid gap-5 sm:gap-6 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="space-y-6">
-            <div className="jazz-panel rounded-3xl p-6">
+            <div className="jazz-panel rounded-3xl p-4 sm:p-6">
               <p className="ger-kicker text-amber-200">
                 {tr(locale, "Featured Show", "Онцлох Эвент")}
               </p>
@@ -306,10 +306,10 @@ export default async function HomePage() {
                     <img
                       src={featured.imageUrl || "/galaxy.jpg"}
                       alt={featured.title}
-                      className="h-64 w-full object-cover"
+                      className="h-52 w-full object-cover sm:h-64"
                     />
                   </div>
-                  <h2 className="jazz-heading mt-5 text-4xl text-amber-100">
+                  <h2 className="jazz-heading mt-4 text-3xl text-amber-100 sm:mt-5 sm:text-4xl">
                     {featured.title}
                   </h2>
                   <p className="mt-2 text-amber-50/80">
@@ -321,7 +321,7 @@ export default async function HomePage() {
                   </p>
                   <Link
                     href={`/events/${featured.id}/reserve`}
-                    className="ger-btn-secondary mt-5 inline-block rounded-xl px-5 py-3 font-semibold"
+                    className="ger-btn-secondary mt-5 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 font-semibold sm:w-auto"
                   >
                     {tr(locale, "Reserve Table", "Ширээ захиалах")}
                   </Link>
@@ -337,19 +337,19 @@ export default async function HomePage() {
               )}
             </div>
 
-            <div className="ger-surface rounded-3xl px-4 py-6">
-              <div className="mb-5 flex items-end justify-between">
+            <div className="ger-surface rounded-3xl px-3 py-5 sm:px-4 sm:py-6">
+              <div className="mb-5 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="ger-kicker">
                     {tr(locale, "Upcoming", "Удахгүй")}
                   </p>
-                  <h2 className="jazz-heading text-4xl text-[#2f2116]">
+                  <h2 className="jazz-heading text-3xl text-[#2f2116] sm:text-4xl">
                     {tr(locale, "Live Schedule", "Хуваарь")}
                   </h2>
                 </div>
                 <Link
                   href="/events"
-                  className="text-sm text-[#5a412d] underline underline-offset-4"
+                  className="text-sm font-medium text-[#5a412d] underline underline-offset-4"
                 >
                   {tr(locale, "All events", "Бүх эвент")}
                 </Link>
@@ -391,11 +391,11 @@ export default async function HomePage() {
           </div>
 
           <div className="space-y-4 xl:sticky xl:top-24 xl:h-fit">
-            <div className="jazz-panel rounded-3xl p-5">
+            <div className="jazz-panel rounded-3xl p-4 sm:p-5">
               <p className="ger-kicker text-amber-200">
                 {tr(locale, "Artist Spotlight", "Artist Spotlight")}
               </p>
-              <h3 className="jazz-heading mt-2 text-3xl text-amber-50">
+              <h3 className="jazz-heading mt-2 text-2xl text-amber-50 sm:text-3xl">
                 {tr(locale, "Resident Performers", "Манай уран бүтээлчид")}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-amber-100/80">
@@ -415,7 +415,7 @@ export default async function HomePage() {
               </div>
               <Link
                 href="/collections"
-                className="ger-btn-secondary mt-3 inline-flex rounded-xl px-4 py-2 text-sm font-semibold"
+                className="ger-btn-secondary mt-3 inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold sm:w-auto"
               >
                 {tr(locale, "Open Full Lineup", "Бүх lineup үзэх")}
               </Link>

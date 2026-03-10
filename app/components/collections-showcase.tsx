@@ -143,7 +143,7 @@ export default function CollectionsShowcase({
                 </div>
               ) : (
                 <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_240px]">
-                  <article className="mx-auto w-full max-w-[700px] rounded-xl border border-[#e4d2be] bg-white">
+                  <article className="mx-auto w-full max-w-full rounded-xl border border-[#e4d2be] bg-white sm:max-w-[700px]">
                     {currentItem?.imageUrl ? (
                       <img
                         src={currentItem.imageUrl}
@@ -246,15 +246,15 @@ export default function CollectionsShowcase({
           </div>
         ) : (
           <div className="grid gap-3">
-            <div className="relative mx-auto w-full max-w-[540px] overflow-hidden rounded-2xl border border-[#eadccd] bg-white">
+            <div className="relative mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-[#eadccd] bg-white sm:max-w-[540px]">
               {activeItem?.imageUrl ? (
                 <img
                   src={activeItem.imageUrl}
                   alt={activeItem.name}
-                  className="h-[270px] w-full object-cover object-center transition duration-500 sm:h-[300px]"
+                  className="h-[230px] w-full object-cover object-center transition duration-500 sm:h-[280px]"
                 />
               ) : (
-                <div className="flex h-[270px] w-full items-center justify-center bg-[#f5e8d8] px-6 text-center text-2xl font-semibold text-[#6d5038] sm:h-[300px]">
+                <div className="flex h-[230px] w-full items-center justify-center bg-[#f5e8d8] px-6 text-center text-2xl font-semibold text-[#6d5038] sm:h-[280px]">
                   {activeItem?.name}
                 </div>
               )}
@@ -265,10 +265,10 @@ export default function CollectionsShowcase({
                 </span>
               </div>
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-5">
-                <p className="text-2xl font-semibold text-[#fff8ee]">
+                <p className="text-xl font-semibold text-[#fff8ee] sm:text-2xl">
                   {activeItem?.name}
                 </p>
-                <p className="mt-1 text-sm text-[#f5e8d8]">
+                <p className="mt-1 line-clamp-2 text-xs text-[#f5e8d8] sm:text-sm">
                   {activeItem?.info}
                 </p>
               </div>
@@ -372,7 +372,7 @@ export default function CollectionsShowcase({
           <div
             className={`grid gap-3 ${compact ? "md:grid-cols-[1fr_250px]" : "lg:grid-cols-[1fr_270px]"}`}
           >
-            <div className="relative mx-auto w-full max-w-[700px] overflow-hidden rounded-2xl border border-[#eadccd] bg-white">
+            <div className="relative mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-[#eadccd] bg-white sm:max-w-[700px]">
               {activeItem?.imageUrl ? (
                 <img
                   src={activeItem.imageUrl}

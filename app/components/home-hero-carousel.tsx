@@ -41,8 +41,8 @@ export default function HomeHeroCarousel({
   }, [safeSlides.length]);
 
   return (
-    <div className="jazz-shell relative overflow-hidden rounded-3xl">
-      <div className="h-[64vh] min-h-[520px]">
+    <div className="jazz-shell relative overflow-hidden rounded-2xl sm:rounded-3xl">
+      <div className="h-[60svh] min-h-[440px] sm:h-[58vh] sm:min-h-[500px] md:h-[64vh]">
         <div
           className="flex h-full transition-transform duration-700 ease-out"
           style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -55,19 +55,26 @@ export default function HomeHeroCarousel({
         </div>
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/30" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/25 md:bg-gradient-to-r md:from-black/80 md:via-black/45 md:to-black/30" />
 
       <div className="absolute inset-0 flex items-end">
-        <div className="max-w-2xl p-8 md:p-12">
-          <h1 className="jazz-heading mt-3 text-5xl text-amber-50 md:text-7xl">{headline}</h1>
-          <p className="mt-4 text-xl text-amber-100/85">{subheadline}</p>
-          <div className="mt-7 flex gap-3">
-            <Link href={ctaHref} className="ger-btn-secondary rounded-xl px-6 py-3 text-sm font-semibold">
+        <div className="max-w-2xl p-5 pb-14 sm:p-8 sm:pb-14 md:p-12">
+          <h1 className="jazz-heading mt-2 text-[2.15rem] leading-[0.95] text-amber-50 sm:text-5xl md:text-7xl">
+            {headline}
+          </h1>
+          <p className="mt-3 max-w-xl text-base text-amber-100/85 sm:mt-3 sm:text-lg md:mt-4 md:text-xl">
+            {subheadline}
+          </p>
+          <div className="mt-5 flex flex-col gap-2.5 sm:mt-7 sm:flex-row sm:gap-3">
+            <Link
+              href={ctaHref}
+              className="ger-btn-secondary inline-flex w-full items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold sm:w-auto sm:px-6 sm:py-3"
+            >
               {ctaText}
             </Link>
             <Link
               href="/menu/drinks"
-              className="rounded-xl border border-amber-200/80 px-6 py-3 text-sm font-semibold text-amber-50 hover:bg-white/10"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-amber-200/80 px-5 py-2.5 text-sm font-semibold text-amber-50 hover:bg-white/10 sm:w-auto sm:px-6 sm:py-3"
             >
               {tr(locale, "Drinks Menu", "Уух зүйлсийн меню")}
             </Link>
@@ -76,7 +83,7 @@ export default function HomeHeroCarousel({
       </div>
 
       {safeSlides.length > 1 && (
-        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-200/30 bg-black/35 px-3 py-2 backdrop-blur">
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-200/30 bg-black/35 px-3 py-2 backdrop-blur sm:bottom-5">
           {safeSlides.map((_, i) => (
             <button
               key={i}

@@ -112,8 +112,8 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 px-4">
-        <div className="mx-auto mt-3 flex h-16 max-w-6xl items-center justify-between rounded-2xl border border-[#c9b39a] bg-[linear-gradient(180deg,rgba(253,249,242,0.96)_0%,rgba(246,236,224,0.95)_100%)] px-4 text-[#2d241b] shadow-sm backdrop-blur">
+      <header className="fixed top-0 left-0 right-0 z-50 px-2 sm:px-4">
+        <div className="mx-auto mt-2 flex h-14 max-w-6xl items-center justify-between rounded-2xl border border-[#c9b39a] bg-[linear-gradient(180deg,rgba(253,249,242,0.96)_0%,rgba(246,236,224,0.95)_100%)] px-3 text-[#2d241b] shadow-sm backdrop-blur sm:mt-3 sm:h-16 sm:px-4">
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/78MusicBar.png"
@@ -122,7 +122,7 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
               alt="78MusicBar Logo"
               className="h-9 w-9 rounded-md object-cover"
             />
-            <span className="jazz-heading text-lg tracking-[0.08em]">
+            <span className="jazz-heading text-base tracking-[0.06em] sm:text-lg sm:tracking-[0.08em]">
               78MusicBar
             </span>
           </Link>
@@ -230,12 +230,12 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Open menu">
+                <Button variant="outline" size="icon" aria-label="Open menu" className="h-9 w-9">
                   <MenuIcon className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
 
-              <SheetContent side="right" className="w-80">
+              <SheetContent side="right" className="w-[86vw] max-w-[360px]">
                 <SheetHeader>
                   <SheetTitle>{tr(locale, "Menu", "Цэс")}</SheetTitle>
                 </SheetHeader>

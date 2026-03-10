@@ -48,7 +48,7 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.16fr_0.84fr]" data-no-lightbox="true">
-      <div className="relative h-[46vh] min-h-[300px] overflow-hidden rounded-2xl border border-amber-300/28 bg-[linear-gradient(165deg,rgba(50,33,20,0.55)_0%,rgba(34,23,15,0.65)_100%)] sm:min-h-[360px] md:h-[50vh] md:min-h-[500px]">
+      <div className="relative h-[44svh] min-h-[280px] overflow-hidden rounded-2xl border border-amber-300/28 bg-[linear-gradient(165deg,rgba(50,33,20,0.55)_0%,rgba(34,23,15,0.65)_100%)] sm:h-[46vh] sm:min-h-[340px] md:h-[50vh] md:min-h-[500px]">
         <div className="absolute inset-0 overflow-hidden rounded-2xl">
           <img
             key={`gallery-active-${active}`}
@@ -66,7 +66,7 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
               type="button"
               onClick={prev}
               aria-label="Previous gallery image"
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-lg border border-amber-200/45 bg-black/45 px-2.5 py-1.5 text-[11px] font-semibold text-amber-50 hover:bg-black/65 md:left-3 md:rounded-xl md:px-3 md:py-2 md:text-xs"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-lg border border-amber-200/45 bg-black/45 px-2 py-1.5 text-[10px] font-semibold text-amber-50 hover:bg-black/65 sm:px-2.5 sm:text-[11px] md:left-3 md:rounded-xl md:px-3 md:py-2 md:text-xs"
             >
               {tr(locale, "Prev", "Өмнөх")}
             </button>
@@ -74,7 +74,7 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
               type="button"
               onClick={next}
               aria-label="Next gallery image"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-amber-200/45 bg-black/45 px-2.5 py-1.5 text-[11px] font-semibold text-amber-50 hover:bg-black/65 md:right-3 md:rounded-xl md:px-3 md:py-2 md:text-xs"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-amber-200/45 bg-black/45 px-2 py-1.5 text-[10px] font-semibold text-amber-50 hover:bg-black/65 sm:px-2.5 sm:text-[11px] md:right-3 md:rounded-xl md:px-3 md:py-2 md:text-xs"
             >
               {tr(locale, "Next", "Дараах")}
             </button>
@@ -122,7 +122,7 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
               <img
                 src={src}
                 alt={`mobile-thumb-${i + 1}`}
-                className="h-16 w-24 object-cover object-center"
+                className="h-16 w-24 object-cover object-center sm:h-16 sm:w-24"
                 data-no-lightbox="true"
               />
             </button>
@@ -184,7 +184,7 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
             CLOSE
           </button>
           <div
-            className="h-[84vh] w-full max-w-[96vw] overflow-hidden rounded-2xl border border-amber-100/35 bg-[linear-gradient(170deg,#3d2a1b_0%,#2a1d13_100%)] shadow-[0_24px_56px_rgba(0,0,0,0.55)]"
+            className="h-[78vh] w-full max-w-[96vw] overflow-hidden rounded-2xl border border-amber-100/35 bg-[linear-gradient(170deg,#3d2a1b_0%,#2a1d13_100%)] shadow-[0_24px_56px_rgba(0,0,0,0.55)] sm:h-[84vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <img

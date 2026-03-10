@@ -9,9 +9,9 @@ type FooterProps = {
 
 export const Footer = ({ locale }: FooterProps) => {
   return (
-    <footer className="mt-16 border-t border-[#ccb89f] bg-[linear-gradient(180deg,#f7efe3_0%,#efe2d1_100%)] text-[#2d241b]">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
-        <div>
+    <footer className="mt-12 border-t border-[#ccb89f] bg-[linear-gradient(180deg,#f7efe3_0%,#efe2d1_100%)] text-[#2d241b] sm:mt-16">
+      <div className="mx-auto grid max-w-6xl gap-4 px-3 py-8 sm:gap-6 sm:px-4 sm:py-10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-[#ddcab2] bg-white/55 p-4 lg:border-0 lg:bg-transparent lg:p-0">
           <div className="flex items-center gap-2">
             <Image
               src="/78MusicBar.png"
@@ -22,7 +22,7 @@ export const Footer = ({ locale }: FooterProps) => {
             />
             <p className="jazz-heading text-2xl">78MusicBar</p>
           </div>
-          <p className="mt-3 text-sm text-[#4a3f34]/85">
+          <p className="mt-3 text-sm leading-relaxed text-[#4a3f34]/85">
             {tr(
               locale,
               "Events, Special cocktails, Reserves.",
@@ -31,7 +31,7 @@ export const Footer = ({ locale }: FooterProps) => {
           </p>
         </div>
 
-        <div>
+        <div className="rounded-2xl border border-[#ddcab2] bg-white/55 p-4 lg:border-0 lg:bg-transparent lg:p-0">
           <p className="jazz-heading text-sm tracking-[0.18em]">
             {tr(locale, "Visit", "Хаяг")}
           </p>
@@ -46,15 +46,15 @@ export const Footer = ({ locale }: FooterProps) => {
           </a>
         </div>
 
-        <div>
+        <div className="rounded-2xl border border-[#ddcab2] bg-white/55 p-4 lg:border-0 lg:bg-transparent lg:p-0">
           <p className="jazz-heading text-sm tracking-[0.18em]">
             {tr(locale, "Contact", "Холбоо барих")}
           </p>
           <p className="mt-3 text-sm text-[#4a3f34]/85">+976 8065 1328</p>
-          <p className="text-sm text-[#4a3f34]/85">78musicbar@gmail.com</p>
+          <p className="break-all text-sm text-[#4a3f34]/85">78musicbar@gmail.com</p>
         </div>
 
-        <div>
+        <div className="rounded-2xl border border-[#ddcab2] bg-white/55 p-4 lg:border-0 lg:bg-transparent lg:p-0">
           <p className="jazz-heading text-sm tracking-[0.18em]">
             {tr(locale, "Explore", "Цэс")}
           </p>

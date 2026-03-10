@@ -71,10 +71,10 @@ export default function OpenDeckLineup({
   });
 
   return (
-    <section className="ger-surface rounded-3xl p-5">
+    <section className="ger-surface rounded-3xl p-4 sm:p-5">
       <div className="mb-3">
         <p className="ger-kicker">Open Deck</p>
-        <h2 className="jazz-heading text-4xl text-[#2f2116]">
+        <h2 className="jazz-heading text-3xl text-[#2f2116] sm:text-4xl">
           {tr(locale, " DJ Lineup", "DJ жагсаалт")}
         </h2>
       </div>
@@ -96,7 +96,7 @@ export default function OpenDeckLineup({
                     key={row.id}
                     className="rounded-xl border border-[#e4d2be] bg-[linear-gradient(170deg,#ffffff_0%,#fff8ef_100%)] p-3 shadow-[0_8px_18px_rgba(86,55,31,0.06)]"
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
                       <p className="text-sm font-semibold text-[#2f2116]">
                         #{i + 1} {row.djName}
                       </p>

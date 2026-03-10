@@ -79,12 +79,12 @@ export default function ReviewsSection({
 
   return (
     <section className={embedded ? "" : "mx-auto max-w-6xl px-4 pb-12"}>
-      <div className="jazz-panel rounded-3xl p-6 md:p-8">
+      <div className="jazz-panel rounded-3xl p-4 sm:p-6 md:p-8">
         <div className="mb-5">
           <p className="ger-kicker text-amber-200">
             {tr(locale, "Community", "Хэрэглэгчдийн Сэтгэгдэл")}
           </p>
-          <h2 className="jazz-heading text-4xl text-amber-50">
+          <h2 className="jazz-heading text-3xl text-amber-50 sm:text-4xl">
             {tr(locale, "Customer Reviews", "Үйлчлүүлэгчдийн Үнэлгээ")}
           </h2>
         </div>
@@ -141,11 +141,11 @@ export default function ReviewsSection({
             )}
           />
 
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-3 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
             <button
               onClick={submit}
               disabled={saving}
-              className="ger-btn-secondary rounded-xl px-4 py-2 text-sm font-semibold"
+              className="ger-btn-secondary w-full rounded-xl px-4 py-2 text-sm font-semibold sm:w-auto"
             >
               {saving
                 ? tr(locale, "Submitting...", "Илгээж байна...")
