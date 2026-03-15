@@ -131,7 +131,8 @@ function ZoneBlock({
                 !isReserved &&
                   !isSelected &&
                   "border-amber-300/30 bg-black/25 text-amber-50 hover:border-amber-300/60 hover:bg-amber-300/15",
-                isSelected && "border-amber-200 bg-[linear-gradient(180deg,#f5d7aa_0%,#e9b873_100%)] text-neutral-900",
+                isSelected &&
+                  "border-amber-200 bg-[linear-gradient(180deg,#f5d7aa_0%,#e9b873_100%)] text-neutral-900",
               )}
             >
               <div className="flex items-center justify-between text-xs font-semibold">
@@ -550,7 +551,7 @@ export default function ReservationClient({
           </div>
 
           <div className="reservation-soft mt-4 rounded-xl py-3 text-center text-sm text-amber-50">
-            {tr(locale, "ENTRANCE", "ОРЦ")}
+            {tr(locale, "ENTRANCE", "ҮҮД")}
           </div>
         </div>
 
@@ -756,7 +757,8 @@ export default function ReservationClient({
               <p>
                 {tr(locale, "Amount", "Дүн")}:{" "}
                 <span className="font-semibold">
-                  {paymentTicket.amount.toLocaleString()} {paymentTicket.currency}
+                  {paymentTicket.amount.toLocaleString()}{" "}
+                  {paymentTicket.currency}
                 </span>
               </p>
               <p>
