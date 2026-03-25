@@ -68,20 +68,22 @@ export default function UpcomingRow({
   return (
     <div
       ref={rowRef}
-      className="grid gap-4 sm:flex sm:snap-x sm:snap-mandatory sm:overflow-x-auto sm:pb-2"
+      className="hide-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:gap-4"
     >
       {events.map((e) => (
         <div
           key={e.id}
-          className="jazz-panel w-full overflow-hidden rounded-2xl shadow-sm transition hover:-translate-y-1 sm:w-[48%] sm:shrink-0 sm:snap-start lg:w-[44%] xl:w-[32%]"
+          className="jazz-panel w-full shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm transition hover:-translate-y-1 sm:w-[48%] lg:w-[44%] xl:w-[32%]"
         >
           <img
             src={e.imageUrl || "/galaxy.jpg"}
             alt={e.title}
-            className="h-44 w-full object-cover sm:h-52"
+            className="h-36 w-full object-cover sm:h-52"
           />
           <div className="p-3 sm:p-3.5">
-            <h3 className="jazz-heading line-clamp-2 text-xl text-amber-100 sm:text-2xl">{e.title}</h3>
+            <h3 className="jazz-heading line-clamp-2 text-lg text-amber-100 sm:text-2xl">
+              {e.title}
+            </h3>
             <p className="mt-2 text-xs text-amber-50/70 sm:text-sm">{fmt(e.startsAt)}</p>
             <p className="text-xs text-amber-50/70 sm:text-sm">
               {tr(locale, "Price", "Үнэ")}:{" "}
@@ -89,10 +91,10 @@ export default function UpcomingRow({
                 {e.price.toLocaleString()} {e.currency}
               </span>
             </p>
-            <p className="text-xs text-amber-50/70 sm:text-sm">{e.venue}</p>
+            <p className="line-clamp-1 text-xs text-amber-50/70 sm:text-sm">{e.venue}</p>
             <Link
               href={`/events/${e.id}/reserve`}
-              className="ger-btn-secondary mt-4 inline-flex w-full items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold"
+              className="ger-btn-secondary mt-3 inline-flex w-full items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold"
             >
               {tr(locale, "Reserve table", "Ширээ захиалах")}
             </Link>

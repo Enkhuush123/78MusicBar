@@ -47,8 +47,8 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
   const next = () => setIndex((cur) => (cur + 1) % safeImages.length);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.16fr_0.84fr]" data-no-lightbox="true">
-      <div className="relative h-[44svh] min-h-[280px] overflow-hidden rounded-2xl border border-amber-300/28 bg-[linear-gradient(165deg,rgba(50,33,20,0.55)_0%,rgba(34,23,15,0.65)_100%)] sm:h-[46vh] sm:min-h-[340px] md:h-[50vh] md:min-h-[500px]">
+    <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.16fr_0.84fr]" data-no-lightbox="true">
+      <div className="relative h-[38svh] min-h-[240px] overflow-hidden rounded-2xl border border-amber-300/28 bg-[linear-gradient(165deg,rgba(50,33,20,0.55)_0%,rgba(34,23,15,0.65)_100%)] sm:h-[46vh] sm:min-h-[340px] md:h-[50vh] md:min-h-[500px]">
         <div className="absolute inset-0 overflow-hidden rounded-2xl">
           <img
             key={`gallery-active-${active}`}
@@ -102,7 +102,7 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
             {safeImages.length} {tr(locale, "images", "зураг")}
           </p>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 pr-1">
+        <div className="hide-scrollbar flex gap-2 overflow-x-auto pb-1 pr-1">
           {safeImages.map((src, i) => (
             <button
               key={`gallery-mobile-thumb-${src}-${i}`}
@@ -122,7 +122,7 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
               <img
                 src={src}
                 alt={`mobile-thumb-${i + 1}`}
-                className="h-16 w-24 object-cover object-center sm:h-16 sm:w-24"
+                className="h-14 w-20 object-cover object-center sm:h-16 sm:w-24"
                 data-no-lightbox="true"
               />
             </button>
@@ -184,7 +184,7 @@ export default function HomeGalleryCarousel({ locale, images }: Props) {
             CLOSE
           </button>
           <div
-            className="h-[78vh] w-full max-w-[96vw] overflow-hidden rounded-2xl border border-amber-100/35 bg-[linear-gradient(170deg,#3d2a1b_0%,#2a1d13_100%)] shadow-[0_24px_56px_rgba(0,0,0,0.55)] sm:h-[84vh]"
+            className="h-[72vh] w-full max-w-[96vw] overflow-hidden rounded-2xl border border-amber-100/35 bg-[linear-gradient(170deg,#3d2a1b_0%,#2a1d13_100%)] shadow-[0_24px_56px_rgba(0,0,0,0.55)] sm:h-[84vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <img

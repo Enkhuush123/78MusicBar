@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useLocale } from "@/app/components/use-locale";
 import { tr } from "@/lib/i18n";
 import { uploadAdminImage } from "@/lib/client-image-upload";
+import { combineDateAndTime } from "@/lib/datetime";
 
 const cn = (...s: (string | false | undefined)[]) =>
   s.filter(Boolean).join(" ");
@@ -19,8 +20,10 @@ export default function AdminNewEventPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [price, setPrice] = useState<number>(0);
   const [currency, setCurrency] = useState("MNT");
-  const [startsAt, setStartsAt] = useState("");
-  const [endsAt, setEndsAt] = useState("");
+  const [startsDate, setStartsDate] = useState("");
+  const [startsTime, setStartsTime] = useState("");
+  const [endsDate, setEndsDate] = useState("");
+  const [endsTime, setEndsTime] = useState("");
   const [isPublished, setIsPublished] = useState(true);
 
   const [uploading, setUploading] = useState(false);
@@ -45,6 +48,12 @@ export default function AdminNewEventPage() {
 
   const submit = async () => {
     setMsg(null);
+    const startsAt = combineDateAndTime(startsDate, startsTime);
+    const endsAt =
+      endsTime && (endsDate || startsDate)
+        ? combineDateAndTime(endsDate || startsDate, endsTime)
+        : "";
+
     if (!title.trim()) return setMsg(tr(locale, "Title required", "Гарчиг заавал оруулна"));
     if (!startsAt) return setMsg(tr(locale, "Starts at is required", "Эхлэх цаг заавал оруулна"));
 
@@ -183,21 +192,43 @@ export default function AdminNewEventPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Starts At">
+              <Field label={tr(locale, "Starts date", "Эхлэх өдөр")}>
                 <input
-                  type="datetime-local"
+                  type="date"
                   className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
-                  value={startsAt}
-                  onChange={(e) => setStartsAt(e.target.value)}
+                  value={startsDate}
+                  onChange={(e) => setStartsDate(e.target.value)}
                 />
               </Field>
 
-              <Field label="Ends At (optional)">
+              <Field label={tr(locale, "Starts time", "Эхлэх цаг")}>
                 <input
-                  type="datetime-local"
+                  type="time"
+                  step={300}
                   className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
-                  value={endsAt}
-                  onChange={(e) => setEndsAt(e.target.value)}
+                  value={startsTime}
+                  onChange={(e) => setStartsTime(e.target.value)}
+                />
+              </Field>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label={tr(locale, "Ends date (optional)", "Дуусах өдөр (сонголттой)")}>
+                <input
+                  type="date"
+                  className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
+                  value={endsDate}
+                  onChange={(e) => setEndsDate(e.target.value)}
+                />
+              </Field>
+
+              <Field label={tr(locale, "Ends time (optional)", "Дуусах цаг (сонголттой)")}>
+                <input
+                  type="time"
+                  step={300}
+                  className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
+                  value={endsTime}
+                  onChange={(e) => setEndsTime(e.target.value)}
                 />
               </Field>
             </div>

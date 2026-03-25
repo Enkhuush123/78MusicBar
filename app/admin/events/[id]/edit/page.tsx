@@ -6,6 +6,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useLocale } from "@/app/components/use-locale";
 import { tr } from "@/lib/i18n";
 import { uploadAdminImage } from "@/lib/client-image-upload";
+import {
+  combineDateAndTime,
+  toDateInput,
+  toTimeInput,
+} from "@/lib/datetime";
 
 const cn = (...s: (string | false | undefined)[]) =>
   s.filter(Boolean).join(" ");
@@ -35,6 +40,10 @@ export default function AdminEditEventPage() {
   const [msg, setMsg] = useState<string | null>(null);
 
   const [form, setForm] = useState<EventDTO | null>(null);
+  const [startsDate, setStartsDate] = useState("");
+  const [startsTime, setStartsTime] = useState("");
+  const [endsDate, setEndsDate] = useState("");
+  const [endsTime, setEndsTime] = useState("");
 
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
@@ -56,6 +65,10 @@ export default function AdminEditEventPage() {
         }
         const data = (await res.json()) as EventDTO;
         setForm(data);
+        setStartsDate(toDateInput(data.startsAt));
+        setStartsTime(toTimeInput(data.startsAt));
+        setEndsDate(toDateInput(data.endsAt));
+        setEndsTime(toTimeInput(data.endsAt));
       } finally {
         setLoading(false);
       }
@@ -102,8 +115,14 @@ export default function AdminEditEventPage() {
     if (!form || !id) return;
 
     setMsg(null);
+    const startsAt = combineDateAndTime(startsDate, startsTime);
+    const endsAt =
+      endsTime && (endsDate || startsDate)
+        ? combineDateAndTime(endsDate || startsDate, endsTime)
+        : "";
+
     if (!form.title.trim()) return setMsg(tr(locale, "Title required", "Гарчиг заавал оруулна"));
-    if (!form.startsAt) return setMsg(tr(locale, "Starts at is required", "Эхлэх цаг заавал оруулна"));
+    if (!startsAt) return setMsg(tr(locale, "Starts at is required", "Эхлэх цаг заавал оруулна"));
 
     setSaving(true);
     try {
@@ -116,8 +135,8 @@ export default function AdminEditEventPage() {
           imageUrl: form.imageUrl?.trim() || null,
           price: Number(form.price),
           currency: form.currency,
-          startsAt: form.startsAt,
-          endsAt: form.endsAt || null,
+          startsAt,
+          endsAt: endsAt || null,
           isPublished: !!form.isPublished,
         }),
       });
@@ -288,23 +307,43 @@ export default function AdminEditEventPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label={tr(locale, "Starts At", "Эхлэх цаг")}>
+              <Field label={tr(locale, "Starts date", "Эхлэх өдөр")}>
                 <input
-                  type="datetime-local"
+                  type="date"
                   className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
-                  value={form.startsAt}
-                  onChange={(e) =>
-                    setForm({ ...form, startsAt: e.target.value })
-                  }
+                  value={startsDate}
+                  onChange={(e) => setStartsDate(e.target.value)}
                 />
               </Field>
 
-              <Field label={tr(locale, "Ends At", "Дуусах цаг")}>
+              <Field label={tr(locale, "Starts time", "Эхлэх цаг")}>
                 <input
-                  type="datetime-local"
+                  type="time"
+                  step={300}
                   className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
-                  value={form.endsAt ?? ""}
-                  onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
+                  value={startsTime}
+                  onChange={(e) => setStartsTime(e.target.value)}
+                />
+              </Field>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label={tr(locale, "Ends date", "Дуусах өдөр")}>
+                <input
+                  type="date"
+                  className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
+                  value={endsDate}
+                  onChange={(e) => setEndsDate(e.target.value)}
+                />
+              </Field>
+
+              <Field label={tr(locale, "Ends time", "Дуусах цаг")}>
+                <input
+                  type="time"
+                  step={300}
+                  className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
+                  value={endsTime}
+                  onChange={(e) => setEndsTime(e.target.value)}
                 />
               </Field>
             </div>

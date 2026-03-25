@@ -69,6 +69,7 @@ model Reservation {
   guests      Int      @default(2)
   reservedFor DateTime
   tableNo     Int
+  surchargeAmount Int   @default(0)
   note        String?
   status      String   @default("new")
   createdAt   DateTime @default(now())

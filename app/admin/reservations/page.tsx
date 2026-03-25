@@ -12,6 +12,7 @@ type Row = {
   tableNo: number;
   guests: number;
   reservedFor: string;
+  surchargeAmount: number;
   note: string | null;
   status: string;
   createdAt: string;
@@ -342,9 +343,17 @@ export default function AdminReservationsPage() {
                     </span>{" "}
                     • {tr(locale, "Expected", "Хүлээгдэх дүн")}:{" "}
                     <span className="font-semibold text-amber-200">
-                      {((r.event?.price || 0) * r.guests).toLocaleString()} {r.event?.currency || "MNT"}
+                      {((r.event?.price || 0) * r.guests + (r.surchargeAmount || 0)).toLocaleString()} {r.event?.currency || "MNT"}
                     </span>
                   </p>
+                  {r.surchargeAmount > 0 ? (
+                    <p className="mt-1 text-xs text-amber-100/80">
+                      {tr(locale, "Surcharge", "Нэмэгдэл")}:{" "}
+                      <span className="font-semibold text-amber-200">
+                        +{r.surchargeAmount.toLocaleString()} {r.event?.currency || "MNT"}
+                      </span>
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-xs text-amber-100/80">
                     {tr(locale, "Booked", "Үүсгэсэн")}: {fmt(r.createdAt)} •{" "}
                     {tr(locale, "Updated", "Шинэчилсэн")}: {fmt(r.updatedAt)} •{" "}

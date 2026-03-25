@@ -279,11 +279,11 @@ export default function OpenDeckSection({ locale, days, approved }: Props) {
   };
 
   return (
-    <section className="ger-surface rounded-3xl p-5">
+    <section className="ger-surface rounded-3xl p-4 sm:p-5">
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <p className="ger-kicker">Open Deck</p>
-          <h2 className="jazz-heading text-4xl text-[#2f2116]">
+          <h2 className="jazz-heading text-[2rem] text-[#2f2116] sm:text-4xl">
             {tr(locale, "DJ Open Deck", "DJ Open Deck")}
           </h2>
         </div>
@@ -306,7 +306,7 @@ export default function OpenDeckSection({ locale, days, approved }: Props) {
           )}
         </div>
       ) : (
-        <div className="ger-surface-soft mb-4 rounded-2xl px-4 py-3">
+        <div className="ger-surface-soft mb-4 rounded-2xl px-3 py-3 sm:px-4">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7a5d42]">
             {tr(locale, "Active Open Deck Date", "Идэвхтэй Open Deck өдөр")}
           </p>
@@ -465,11 +465,11 @@ export default function OpenDeckSection({ locale, days, approved }: Props) {
               ))}
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <button
                 onClick={submit}
                 disabled={saving || noSchedule}
-                className="ger-btn-primary min-w-[190px] rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-60"
+                className="ger-btn-primary w-full rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-60 sm:min-w-[190px] sm:w-auto"
               >
                 {saving
                   ? tr(locale, "Please wait...", "Түр хүлээнэ үү...")

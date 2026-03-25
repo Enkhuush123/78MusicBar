@@ -113,16 +113,16 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 px-2 sm:px-4">
-        <div className="mx-auto mt-2 flex h-14 max-w-6xl items-center justify-between rounded-2xl border border-[#c9b39a] bg-[linear-gradient(180deg,rgba(253,249,242,0.96)_0%,rgba(246,236,224,0.95)_100%)] px-3 text-[#2d241b] shadow-sm backdrop-blur sm:mt-3 sm:h-16 sm:px-4">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="mx-auto mt-2 flex h-[3.25rem] max-w-6xl items-center justify-between rounded-2xl border border-[#c9b39a] bg-[linear-gradient(180deg,rgba(253,249,242,0.96)_0%,rgba(246,236,224,0.95)_100%)] px-2.5 text-[#2d241b] shadow-sm backdrop-blur sm:mt-3 sm:h-16 sm:px-4">
+          <Link href="/" className="flex min-w-0 items-center gap-2">
             <Image
               src="/78MusicBar.png"
               width={36}
               height={36}
               alt="78MusicBar Logo"
-              className="h-9 w-9 rounded-md object-cover"
+              className="h-8 w-8 rounded-md object-cover sm:h-9 sm:w-9"
             />
-            <span className="jazz-heading text-base tracking-[0.06em] sm:text-lg sm:tracking-[0.08em]">
+            <span className="jazz-heading truncate text-[0.95rem] tracking-[0.04em] sm:text-lg sm:tracking-[0.08em]">
               78MusicBar
             </span>
           </Link>
@@ -230,17 +230,17 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Open menu" className="h-9 w-9">
+                <Button variant="outline" size="icon" aria-label="Open menu" className="h-[2.2rem] w-[2.2rem] sm:h-9 sm:w-9">
                   <MenuIcon className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
 
-              <SheetContent side="right" className="w-[86vw] max-w-[360px]">
+              <SheetContent side="right" className="w-[88vw] max-w-[360px] px-4">
                 <SheetHeader>
                   <SheetTitle>{tr(locale, "Menu", "Цэс")}</SheetTitle>
                 </SheetHeader>
 
-                <div className="mt-6 grid gap-2">
+                <div className="mt-5 grid gap-2">
                   <Button
                     variant="outline"
                     className="w-full justify-start border-[#d2b292]/60 bg-white text-[#2f2116] hover:bg-[#f7ecdd]"

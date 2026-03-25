@@ -26,6 +26,15 @@ type HomeImage = {
   isActive: boolean;
 };
 
+type InstagramPost = {
+  id: string;
+  imageUrl: string;
+  caption: string;
+  postUrl: string;
+  sort: number;
+  isActive: boolean;
+};
+
 type EventOption = {
   id: string;
   title: string;
@@ -43,7 +52,7 @@ type FeaturedRow = {
 
 type ConfirmState = {
   open: boolean;
-  kind: "slider" | "gallery" | "featured" | null;
+  kind: "slider" | "gallery" | "instagram" | "featured" | null;
   id: string | null;
   title: string;
   body: string;
@@ -183,6 +192,7 @@ export default function AdminHomePage() {
   const [hero, setHero] = useState<Hero | null>(null);
   const [sliderImgs, setSliderImgs] = useState<HomeImage[]>([]);
   const [galleryImgs, setGalleryImgs] = useState<HomeImage[]>([]);
+  const [instagramPosts, setInstagramPosts] = useState<InstagramPost[]>([]);
   const [events, setEvents] = useState<EventOption[]>([]);
   const [featured, setFeatured] = useState<FeaturedRow[]>([]);
 
@@ -202,12 +212,15 @@ export default function AdminHomePage() {
 
   const load = async () => {
     setMsg(null);
-    const [h, slider, gallery, f, ev] = await Promise.all([
+    const [h, slider, gallery, instagram, f, ev] = await Promise.all([
       fetch("/api/admin/home", { cache: "no-store" }).then((r) => r.json()),
       fetch("/api/admin/home/images", { cache: "no-store" }).then((r) =>
         r.json(),
       ),
       fetch("/api/admin/home/gallery", { cache: "no-store" }).then((r) =>
+        r.json(),
+      ),
+      fetch("/api/admin/home/instagram", { cache: "no-store" }).then((r) =>
         r.json(),
       ),
       fetch("/api/admin/home/featured", { cache: "no-store" }).then((r) =>
@@ -220,6 +233,7 @@ export default function AdminHomePage() {
     setHero(h);
     setSliderImgs(slider);
     setGalleryImgs(gallery);
+    setInstagramPosts(instagram);
     setFeatured(f);
     setEvents(ev);
     setSpecialPick((prev) => prev || ev?.[0]?.id || "");
@@ -401,6 +415,83 @@ export default function AdminHomePage() {
     });
   };
 
+  const addInstagramPost = async (file: File) => {
+    setUploading(true);
+    setMsg(null);
+    try {
+      const up = await uploadToCloudinary(file);
+      const res = await fetch("/api/admin/home/instagram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: up.url,
+          caption: "",
+          postUrl: "https://instagram.com/78musicbar/",
+          sort: 0,
+        }),
+      });
+      if (!res.ok)
+        return setMsg(tr(locale, "Create failed", "Үүсгэхэд алдаа гарлаа"));
+      await load();
+    } catch (e) {
+      const reason = String((e as Error)?.message ?? "");
+      setMsg(reason || tr(locale, "Upload error", "Зураг оруулахад алдаа гарлаа"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const addInstagramPosts = async (files: FileList | null) => {
+    if (!files?.length) return;
+    for (const file of Array.from(files)) {
+      await addInstagramPost(file);
+    }
+  };
+
+  const toggleInstagramActive = async (id: string, isActive: boolean) => {
+    await fetch(`/api/admin/home/instagram/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive }),
+    });
+    await load();
+  };
+
+  const updateInstagramSort = async (id: string, sort: number) => {
+    await fetch(`/api/admin/home/instagram/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sort }),
+    });
+    await load();
+  };
+
+  const updateInstagramField = async (
+    id: string,
+    patch: Partial<Pick<InstagramPost, "caption" | "postUrl">>,
+  ) => {
+    await fetch(`/api/admin/home/instagram/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    await load();
+  };
+
+  const askRemoveInstagramPost = (id: string) => {
+    setConfirmDialog({
+      open: true,
+      kind: "instagram",
+      id,
+      title: tr(locale, "Delete Instagram post?", "Instagram постыг устгах уу?"),
+      body: tr(
+        locale,
+        "This post card will be removed from homepage Instagram section.",
+        "Энэ пост card homepage Instagram хэсгээс устна.",
+      ),
+    });
+  };
+
   const setSpecialEvent = async () => {
     if (!specialPick) return;
     setSaving(true);
@@ -518,6 +609,11 @@ export default function AdminHomePage() {
     }
     if (kind === "gallery") {
       await fetch(`/api/admin/home/gallery/${id}`, { method: "DELETE" });
+      await load();
+      return;
+    }
+    if (kind === "instagram") {
+      await fetch(`/api/admin/home/instagram/${id}`, { method: "DELETE" });
       await load();
       return;
     }
@@ -928,6 +1024,115 @@ export default function AdminHomePage() {
               {galleryImgs.length === 0 && (
                 <div className="col-span-full rounded-2xl border border-dashed border-amber-300/30 bg-black/20 p-6 text-center text-sm text-amber-100/70">
                   {tr(locale, "No gallery images yet.", "Галерейн зураг алга байна.")}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-amber-100">
+                  {tr(locale, "Instagram Posts", "Instagram постууд")}
+                </p>
+                <p className="mt-1 text-xs text-amber-100/70">
+                  {tr(
+                    locale,
+                    "Separate from gallery. Upload posts with caption and Instagram link.",
+                    "Gallery-с тусдаа. Caption болон Instagram link-тэй пост оруулна.",
+                  )}
+                </p>
+              </div>
+              <div className="rounded-xl border border-amber-300/30 bg-black/20 px-3 py-2">
+                <p className="text-xs text-amber-100/70">{tr(locale, "TOTAL", "НИЙТ")}</p>
+                <p className="text-lg font-bold text-amber-50">{instagramPosts.length}</p>
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <label className="inline-flex h-11 cursor-pointer items-center rounded-xl border border-amber-300/40 px-4 text-sm text-amber-50 hover:bg-amber-300/15">
+                {uploading
+                  ? tr(locale, "Uploading...", "Оруулж байна...")
+                  : tr(locale, "Upload Instagram posts", "Instagram пост оруулах")}
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    void addInstagramPosts(e.target.files);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {instagramPosts.map((post) => (
+                <article
+                  key={post.id}
+                  className="overflow-hidden rounded-2xl border border-amber-300/25 bg-black/20"
+                >
+                  <div className="h-48 bg-black/30">
+                    <img
+                      src={post.imageUrl}
+                      alt="instagram-post"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="grid gap-3 p-3">
+                    <textarea
+                      rows={3}
+                      className="rounded-xl border border-amber-300/30 bg-black/30 px-3 py-2 text-sm text-amber-50"
+                      defaultValue={post.caption}
+                      onBlur={(e) =>
+                        void updateInstagramField(post.id, { caption: e.target.value })
+                      }
+                      placeholder={tr(locale, "Caption", "Тайлбар")}
+                    />
+                    <input
+                      className="h-10 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-sm text-amber-50"
+                      defaultValue={post.postUrl}
+                      onBlur={(e) =>
+                        void updateInstagramField(post.id, { postUrl: e.target.value })
+                      }
+                      placeholder={tr(locale, "Instagram post link", "Instagram post link")}
+                    />
+                    <div className="grid grid-cols-[1fr_auto] items-center gap-2">
+                      <input
+                        type="number"
+                        className="h-10 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-sm text-amber-50"
+                        defaultValue={post.sort}
+                        onBlur={(e) =>
+                          void updateInstagramSort(post.id, Number(e.target.value))
+                        }
+                      />
+                      <label className="inline-flex items-center gap-2 text-xs text-amber-100/80">
+                        <input
+                          type="checkbox"
+                          checked={post.isActive}
+                          onChange={(e) =>
+                            void toggleInstagramActive(post.id, e.target.checked)
+                          }
+                        />
+                        {tr(locale, "Active", "Идэвхтэй")}
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => askRemoveInstagramPost(post.id)}
+                      className="h-10 rounded-xl border border-amber-300/40 text-sm font-semibold text-amber-50 hover:bg-amber-300/15 transition"
+                    >
+                      {tr(locale, "Delete", "Устгах")}
+                    </button>
+                  </div>
+                </article>
+              ))}
+
+              {instagramPosts.length === 0 && (
+                <div className="col-span-full rounded-2xl border border-dashed border-amber-300/30 bg-black/20 p-6 text-center text-sm text-amber-100/70">
+                  {tr(locale, "No Instagram posts yet.", "Instagram пост алга байна.")}
                 </div>
               )}
             </div>

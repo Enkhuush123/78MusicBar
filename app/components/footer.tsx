@@ -9,8 +9,8 @@ type FooterProps = {
 
 export const Footer = ({ locale }: FooterProps) => {
   return (
-    <footer className="mt-12 border-t border-[#ccb89f] bg-[linear-gradient(180deg,#f7efe3_0%,#efe2d1_100%)] text-[#2d241b] sm:mt-16">
-      <div className="mx-auto grid max-w-6xl gap-4 px-3 py-8 sm:gap-6 sm:px-4 sm:py-10 md:grid-cols-2 lg:grid-cols-4">
+    <footer className="mt-10 border-t border-[#ccb89f] bg-[linear-gradient(180deg,#f7efe3_0%,#efe2d1_100%)] text-[#2d241b] sm:mt-16">
+      <div className="mx-auto grid max-w-6xl gap-3 px-3 py-7 sm:gap-6 sm:px-4 sm:py-10 md:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-[#ddcab2] bg-white/55 p-4 lg:border-0 lg:bg-transparent lg:p-0">
           <div className="flex items-center gap-2">
             <Image

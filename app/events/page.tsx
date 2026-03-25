@@ -11,16 +11,16 @@ export default async function EventsPage() {
   });
 
   return (
-    <main className="pt-24">
-      <section className="mx-auto max-w-6xl px-4">
-        <div className="ger-surface rounded-3xl p-8 md:p-10">
+    <main className="pt-22 sm:pt-24">
+      <section className="mx-auto max-w-6xl px-3 sm:px-4">
+        <div className="ger-surface rounded-3xl p-5 sm:p-8 md:p-10">
           <p className="ger-kicker">
             {tr(locale, "Calendar", "Хуваарь")}
           </p>
-          <h1 className="jazz-heading text-5xl text-[#2f2116] md:text-7xl">
+          <h1 className="jazz-heading text-[2.5rem] text-[#2f2116] md:text-7xl">
             {tr(locale, "Events", "Эвентүүд")}
           </h1>
-          <p className="mt-3 max-w-2xl text-xl text-[#5a412d]">
+          <p className="mt-3 max-w-2xl text-base text-[#5a412d] sm:text-xl">
             {tr(
               locale,
               "Upcoming live performances and special events at 78MusicBar.",
@@ -30,7 +30,7 @@ export default async function EventsPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <section className="mx-auto max-w-6xl px-3 py-8 sm:px-4 sm:py-10">
         {events.length === 0 ? (
           <div className="ger-surface rounded-2xl p-10 text-center text-[#5a412d]">
             {tr(

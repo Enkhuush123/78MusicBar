@@ -32,8 +32,8 @@ export const EventCard = async (props: Props) => {
   const locale = await getServerLocale();
   if (props.variant === "mock") {
     return (
-      <div className="jazz-panel overflow-hidden rounded-2xl shadow-sm">
-        <div className="h-52 w-full overflow-hidden">
+      <div className="jazz-panel min-w-0 overflow-hidden rounded-2xl shadow-sm">
+        <div className="h-44 w-full overflow-hidden sm:h-52">
           <img
             src={props.image}
             alt={props.title}
@@ -41,8 +41,8 @@ export const EventCard = async (props: Props) => {
           />
         </div>
 
-        <div className="p-5">
-          <h3 className="jazz-heading text-2xl text-amber-100">{props.title}</h3>
+        <div className="p-4 sm:p-5">
+          <h3 className="jazz-heading text-[1.55rem] text-amber-100 sm:text-2xl">{props.title}</h3>
 
           <div className="mt-2 space-y-1 text-sm text-amber-50/70">
             <p>
@@ -73,8 +73,8 @@ export const EventCard = async (props: Props) => {
   });
 
   return (
-    <div className="jazz-panel overflow-hidden rounded-2xl shadow-sm transition hover:-translate-y-1">
-      <div className="h-52 w-full overflow-hidden">
+    <div className="jazz-panel min-w-0 overflow-hidden rounded-2xl shadow-sm transition hover:-translate-y-1">
+      <div className="h-44 w-full overflow-hidden sm:h-52">
         <img
           src={props.imageUrl || "/placeholder.jpg"}
           alt={props.title}
@@ -82,8 +82,8 @@ export const EventCard = async (props: Props) => {
         />
       </div>
 
-      <div className="p-5">
-        <h3 className="jazz-heading text-2xl text-amber-100">{props.title}</h3>
+      <div className="p-4 sm:p-5">
+        <h3 className="jazz-heading text-[1.55rem] text-amber-100 sm:text-2xl">{props.title}</h3>
 
         <div className="mt-2 space-y-1 text-sm text-amber-50/70">
           <p>

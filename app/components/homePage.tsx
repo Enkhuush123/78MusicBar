@@ -9,7 +9,12 @@ import UpcomingRow from "@/app/components/upcoming-row";
 import OpenDeckLineup from "@/app/components/openDeckLineup";
 import HomeHeroCarousel from "@/app/components/home-hero-carousel";
 import HomeGalleryCarousel from "@/app/components/home-gallery-carousel";
+import InstagramShowcase from "@/app/components/instagram-showcase";
 import { HOME_GALLERY_SLUG, parseHomeGallery } from "@/lib/home-gallery";
+import {
+  HOME_INSTAGRAM_POSTS_SLUG,
+  parseHomeInstagramPosts,
+} from "@/lib/home-instagram-posts";
 
 const FIXED_TYPES = [
   { key: "dj", nameEn: "DJ", nameMn: "DJ" },
@@ -69,6 +74,9 @@ export default async function HomePage() {
   });
   const homeGalleryPage = await prisma.sitePage.findUnique({
     where: { slug: HOME_GALLERY_SLUG },
+  });
+  const homeInstagramPage = await prisma.sitePage.findUnique({
+    where: { slug: HOME_INSTAGRAM_POSTS_SLUG },
   });
 
   const manualFeatured = await prisma.homeFeaturedEvent.findMany({
@@ -249,6 +257,10 @@ export default async function HomePage() {
   const galleryImages = uniqueUrls(
     activeGalleryImages.length ? activeGalleryImages : anyGalleryImages,
   ).slice(0, 18);
+  const instagramRows = parseHomeInstagramPosts(homeInstagramPage?.body);
+  const instagramPosts = instagramRows.filter((row) => row.isActive).length
+    ? instagramRows.filter((row) => row.isActive)
+    : instagramRows;
 
   return (
     <main className="pt-16 sm:pt-20">
@@ -293,10 +305,19 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="mx-auto mt-8 max-w-7xl px-3 pb-12 sm:px-4">
-        <div className="grid gap-5 sm:gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="space-y-6">
-            <div className="jazz-panel rounded-3xl p-4 sm:p-6">
+      {instagramPosts.length > 0 && (
+        <InstagramShowcase
+          locale={locale}
+          posts={instagramPosts}
+          profileUrl="https://instagram.com/78musicbar/"
+          handle="78musicbar"
+        />
+      )}
+
+      <section className="mx-auto mt-7 max-w-7xl px-3 pb-10 sm:mt-8 sm:px-4 sm:pb-12">
+        <div className="grid gap-4 sm:gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="min-w-0 space-y-4 sm:space-y-6">
+            <div className="jazz-panel min-w-0 rounded-3xl p-4 sm:p-6">
               <p className="ger-kicker text-amber-200">
                 {tr(locale, "Featured Show", "Онцлох Эвент")}
               </p>
@@ -309,7 +330,7 @@ export default async function HomePage() {
                       className="h-52 w-full object-cover sm:h-64"
                     />
                   </div>
-                  <h2 className="jazz-heading mt-4 text-3xl text-amber-100 sm:mt-5 sm:text-4xl">
+                  <h2 className="jazz-heading mt-4 text-[1.9rem] text-amber-100 sm:mt-5 sm:text-4xl">
                     {featured.title}
                   </h2>
                   <p className="mt-2 text-amber-50/80">
@@ -337,13 +358,13 @@ export default async function HomePage() {
               )}
             </div>
 
-            <div className="ger-surface rounded-3xl px-3 py-5 sm:px-4 sm:py-6">
+            <div className="ger-surface min-w-0 rounded-3xl px-3 py-4 sm:px-4 sm:py-6">
               <div className="mb-5 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="ger-kicker">
                     {tr(locale, "Upcoming", "Удахгүй")}
                   </p>
-                  <h2 className="jazz-heading text-3xl text-[#2f2116] sm:text-4xl">
+                  <h2 className="jazz-heading text-[1.9rem] text-[#2f2116] sm:text-4xl">
                     {tr(locale, "Live Schedule", "Хуваарь")}
                   </h2>
                 </div>
@@ -390,8 +411,8 @@ export default async function HomePage() {
             <ReviewsSection locale={locale} initialReviews={reviews} embedded />
           </div>
 
-          <div className="space-y-4 xl:sticky xl:top-24 xl:h-fit">
-            <div className="jazz-panel rounded-3xl p-4 sm:p-5">
+          <div className="min-w-0 space-y-4 xl:sticky xl:top-24 xl:h-fit">
+            <div className="jazz-panel min-w-0 rounded-3xl p-4 sm:p-5">
               <p className="ger-kicker text-amber-200">
                 {tr(locale, "Artist Spotlight", "Artist Spotlight")}
               </p>
@@ -421,7 +442,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="ger-surface rounded-3xl p-3">
+            <div className="ger-surface min-w-0 rounded-3xl p-2.5 sm:p-3">
               <CollectionsShowcase groups={performerGroups} compact />
             </div>
           </div>

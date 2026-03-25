@@ -32,25 +32,25 @@ export default async function AboutPage() {
   ];
 
   return (
-    <main className="relative overflow-hidden pt-24 pb-16">
-      <div className="pointer-events-none absolute inset-x-0 top-10 h-[420px] bg-[radial-gradient(circle_at_15%_20%,rgba(229,169,95,0.24),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(122,84,48,0.22),transparent_42%)]" />
+    <main className="relative overflow-hidden pt-22 pb-14 sm:pt-24 sm:pb-16">
+      <div className="pointer-events-none absolute inset-x-0 top-8 h-[300px] bg-[radial-gradient(circle_at_15%_20%,rgba(229,169,95,0.24),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(122,84,48,0.22),transparent_42%)] sm:h-[420px]" />
 
       <section className="mx-auto max-w-7xl px-4">
         <div className="relative overflow-hidden rounded-[2rem] border border-amber-200/20 bg-[linear-gradient(132deg,#27180f_0%,#1d130d_35%,#392314_100%)] shadow-[0_24px_65px_rgba(14,9,5,0.36)]">
           <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
-            <article className="relative p-6 md:p-10 lg:p-12">
+            <article className="relative p-5 md:p-10 lg:p-12">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_14%,rgba(255,208,149,0.17),transparent_44%)]" />
               <div className="relative">
-                <h1 className="jazz-heading max-w-3xl text-5xl text-amber-50 md:text-7xl">
+                <h1 className="jazz-heading max-w-3xl text-[2.6rem] text-amber-50 md:text-7xl">
                   {about?.title || "78MusicBar"}
                 </h1>
-                <p className="mt-4 max-w-2xl text-lg leading-relaxed text-amber-50/90 md:text-xl">
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-amber-50/90 md:text-xl">
                   {intro}
                 </p>
               </div>
             </article>
 
-            <aside className="relative min-h-[380px] overflow-hidden border-t border-amber-200/20 lg:min-h-[520px] lg:border-t-0 lg:border-l">
+            <aside className="relative min-h-[300px] overflow-hidden border-t border-amber-200/20 lg:min-h-[520px] lg:border-t-0 lg:border-l">
               <img
                 src={heroImage}
                 alt={about?.title ?? "About"}
@@ -60,7 +60,7 @@ export default async function AboutPage() {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(255,210,152,0.18),transparent_40%)]" />
               {quote.trim() ? (
                 <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
-                  <p className="max-w-xl text-lg italic text-amber-100/95">
+                  <p className="max-w-xl text-base italic text-amber-100/95 md:text-lg">
                     “{quote}”
                   </p>
                 </div>
@@ -73,7 +73,7 @@ export default async function AboutPage() {
       <section className="mx-auto mt-8 max-w-7xl px-4">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <article className="overflow-hidden rounded-3xl border border-amber-200/20 bg-[linear-gradient(165deg,rgba(38,25,17,0.97)_0%,rgba(23,16,12,0.98)_100%)] p-6 md:p-8">
-            <h2 className="jazz-heading text-4xl text-amber-100">
+            <h2 className="jazz-heading text-3xl text-amber-100 sm:text-4xl">
               {storyHeading}
             </h2>
             <p className="mt-3 whitespace-pre-wrap text-amber-100/84">
@@ -83,7 +83,7 @@ export default async function AboutPage() {
 
           <aside className="grid gap-4">
             <article className="rounded-3xl border border-amber-200/20 bg-[linear-gradient(150deg,rgba(64,41,28,0.95)_0%,rgba(30,20,15,0.95)_100%)] p-6">
-              <h3 className="jazz-heading text-3xl text-amber-100">
+              <h3 className="jazz-heading text-[1.8rem] text-amber-100 sm:text-3xl">
                 {vibeHeading}
               </h3>
               <p className="mt-3 whitespace-pre-wrap text-amber-100/83">
@@ -92,7 +92,7 @@ export default async function AboutPage() {
             </article>
 
             <article className="rounded-3xl border border-amber-200/20 bg-[linear-gradient(150deg,rgba(53,35,23,0.96)_0%,rgba(28,19,14,0.96)_100%)] p-6">
-              <h3 className="jazz-heading text-3xl text-amber-100">
+              <h3 className="jazz-heading text-[1.8rem] text-amber-100 sm:text-3xl">
                 {detailsHeading}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-amber-100/82">
@@ -123,14 +123,14 @@ export default async function AboutPage() {
               <p className="ger-kicker text-amber-200">
                 {tr(locale, "Gallery", "Галерей")}
               </p>
-              <h2 className="jazz-heading text-4xl text-amber-50">
+              <h2 className="jazz-heading text-3xl text-amber-50 sm:text-4xl">
                 {tr(locale, "Inside 78MusicBar", "78MusicBar дотор")}
               </h2>
             </div>
           </div>
 
           {gallery.length > 0 ? (
-            <div className="mt-5 grid auto-rows-[145px] gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-5 grid auto-rows-[120px] gap-3 sm:auto-rows-[145px] sm:grid-cols-2 lg:grid-cols-4">
               {gallery.map((item, i) => (
                 <a
                   key={`${item.imageUrl}-${i}`}

@@ -38,7 +38,7 @@ export default async function AdminLayout({
   ];
 
   return (
-    <main className="admin-theme pt-24">
+    <main className="admin-theme min-h-screen pt-24 pb-12">
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 md:items-start md:grid-cols-[260px_1fr]">
         <aside className="admin-sidebar h-fit rounded-3xl p-4 md:sticky md:top-28">
           <p className="jazz-heading px-2 text-xs tracking-[0.08em] text-amber-200">

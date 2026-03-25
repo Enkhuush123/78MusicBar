@@ -52,6 +52,7 @@ export async function GET(req: Request) {
       tableNo: true,
       guests: true,
       reservedFor: true,
+      surchargeAmount: true,
       status: true,
       createdAt: true,
       note: true,

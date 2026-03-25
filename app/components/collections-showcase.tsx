@@ -17,6 +17,71 @@ type Group = {
   items: Item[];
 };
 
+function itemCountLabel(count: number) {
+  return `${count} ${count === 1 ? "profile" : "profiles"}`;
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-2xl border border-[#eadccd] bg-white px-4 py-8 text-center text-sm text-[#6f533b]">
+      No performer profiles yet.
+    </div>
+  );
+}
+
+function SpotlightImage({
+  item,
+  label,
+  compact = false,
+}: {
+  item: Item | null;
+  label: string;
+  compact?: boolean;
+}) {
+  const height = compact ? "h-[240px] sm:h-[340px]" : "h-[280px] sm:h-[440px]";
+
+  return (
+    <div className="relative overflow-hidden rounded-[28px] border border-[#dcc4a8] bg-[#1f160f] shadow-[0_24px_56px_rgba(45,26,12,0.22)]">
+      {item?.imageUrl ? (
+        <img
+          src={item.imageUrl}
+          alt={item.name}
+          className={`w-full object-cover object-center transition duration-700 ${height}`}
+        />
+      ) : (
+        <div
+          className={`flex w-full items-center justify-center bg-[#f3e1cb] px-6 text-center text-3xl font-semibold text-[#6d5038] ${height}`}
+        >
+          {item?.name}
+        </div>
+      )}
+
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,8,6,0.08)_0%,rgba(12,8,6,0.16)_32%,rgba(12,8,6,0.88)_100%)]" />
+
+      <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+        <span className="inline-flex rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f6ddbc] backdrop-blur">
+          {label}
+        </span>
+        <span className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur">
+          78MusicBar
+        </span>
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#f2c99b]">
+          Performer spotlight
+        </p>
+        <p className="jazz-heading mt-2 text-[1.9rem] leading-none text-[#fff8ee] sm:text-5xl">
+          {item?.name}
+        </p>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#f7e8d4]/88 sm:mt-3 sm:text-base">
+          {item?.info}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function CollectionsShowcase({
   groups,
   compact = false,
@@ -28,19 +93,14 @@ export default function CollectionsShowcase({
 }) {
   const [activeKey, setActiveKey] = useState(groups[0]?.key ?? "");
   const [activeItemIndex, setActiveItemIndex] = useState(0);
-  const [stackedIndexMap, setStackedIndexMap] = useState<
-    Record<string, number>
-  >({});
+  const [stackedIndexMap, setStackedIndexMap] = useState<Record<string, number>>(
+    {},
+  );
 
   const active = useMemo(
     () => groups.find((g) => g.key === activeKey) ?? groups[0],
     [activeKey, groups],
   );
-
-  const selectGroup = (key: string) => {
-    setActiveKey(key);
-    setActiveItemIndex(0);
-  };
 
   useEffect(() => {
     if (!stacked) return;
@@ -59,27 +119,25 @@ export default function CollectionsShowcase({
   }, [groups, stacked]);
 
   useEffect(() => {
-    if (!groups.length || groups.length < 2) return;
+    if (!groups.length || groups.length < 2 || stacked) return;
     const timer = setInterval(() => {
-      const nextKey = (() => {
-        const current = activeKey;
+      setActiveKey((current) => {
         const idx = groups.findIndex((g) => g.key === current);
         if (idx === -1) return groups[0].key;
         return groups[(idx + 1) % groups.length].key;
-      })();
-      setActiveKey(nextKey);
+      });
       setActiveItemIndex(0);
     }, 5200);
     return () => clearInterval(timer);
-  }, [groups, activeKey]);
+  }, [groups, stacked]);
 
   useEffect(() => {
-    if (!active?.items?.length || active.items.length < 2) return;
+    if (!active?.items?.length || active.items.length < 2 || stacked) return;
     const timer = setInterval(() => {
       setActiveItemIndex((prev) => (prev + 1) % active.items.length);
     }, 3600);
     return () => clearInterval(timer);
-  }, [active]);
+  }, [active, stacked]);
 
   if (!groups.length) {
     return (
@@ -91,7 +149,7 @@ export default function CollectionsShowcase({
 
   if (stacked) {
     return (
-      <div className="grid gap-4">
+      <div className="grid gap-5">
         {groups.map((group) => {
           const hasItems = group.items.length > 0;
           const currentIndex = hasItems
@@ -100,112 +158,180 @@ export default function CollectionsShowcase({
           const currentItem = hasItems ? group.items[currentIndex] : null;
           const canRotate = group.items.length > 1;
 
-          const prevItem = () => {
-            if (!canRotate) return;
-            setStackedIndexMap((prev) => ({
-              ...prev,
-              [group.key]:
-                ((prev[group.key] ?? 0) - 1 + group.items.length) %
-                group.items.length,
-            }));
-          };
-          const nextItem = () => {
-            if (!canRotate) return;
-            setStackedIndexMap((prev) => ({
-              ...prev,
-              [group.key]: ((prev[group.key] ?? 0) + 1) % group.items.length,
-            }));
-          };
-
           return (
             <section
               key={group.key}
-              className="rounded-2xl border border-[#ddcab2] bg-[linear-gradient(170deg,#fffaf2_0%,#fff4e7_100%)] p-4 shadow-[0_10px_24px_rgba(90,54,24,0.1)]"
+              className="relative overflow-hidden rounded-[32px] border border-[#d8c0a1] bg-[linear-gradient(160deg,#fff8ee_0%,#f4e6d5_58%,#ecd6bb_100%)] p-4 shadow-[0_18px_36px_rgba(85,53,28,0.12)]"
             >
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a5d42]">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(255,255,255,0.56),transparent_28%),radial-gradient(circle_at_88%_10%,rgba(187,133,81,0.22),transparent_26%)]" />
+
+              <div className="relative flex items-end justify-between gap-3">
+                <div className="max-w-2xl">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b694b]">
                     {group.subtitle}
                   </p>
-                  <h3 className="jazz-heading mt-1 text-2xl text-[#2f2116]">
+                  <h3 className="jazz-heading mt-2 text-[2rem] text-[#2f2116] sm:text-4xl md:text-5xl">
                     {group.label}
                   </h3>
                 </div>
-                <p className="rounded-full border border-[#e4d2be] bg-white px-3 py-1 text-xs font-semibold text-[#5f4733]">
-                  {group.items.length}{" "}
-                  {group.items.length === 1 ? "profile" : "profiles"}
+                <p className="rounded-full border border-[#d8c1a8] bg-white/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#5f4733] shadow-[0_10px_20px_rgba(84,56,31,0.08)]">
+                  {itemCountLabel(group.items.length)}
                 </p>
               </div>
 
               {!hasItems ? (
-                <div className="mt-3 rounded-xl border border-[#e4d2be] bg-white p-4 text-sm text-[#5f4733]">
-                  No performer profiles yet.
+                <div className="relative mt-4">
+                  <EmptyState />
                 </div>
               ) : (
-                <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_240px]">
-                  <article className="mx-auto w-full max-w-full rounded-xl border border-[#e4d2be] bg-white sm:max-w-[700px]">
-                    {currentItem?.imageUrl ? (
-                      <img
-                        src={currentItem.imageUrl}
-                        alt={currentItem.name}
-                        className="h-[260px] w-full object-cover object-center transition duration-500 sm:h-[320px] lg:h-[350px]"
-                      />
-                    ) : (
-                      <div className="flex h-[260px] w-full items-center justify-center bg-[#f5e8d8] px-4 text-center text-2xl font-semibold text-[#6d5038] sm:h-[320px] lg:h-[350px]">
-                        {currentItem?.name}
-                      </div>
-                    )}
-                  </article>
+                <div className="relative mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_320px]">
+                  <SpotlightImage item={currentItem} label={group.label} />
 
-                  <div className="rounded-xl border border-[#e6d3bc] bg-white/90 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a5d42]">
-                      Now Showing
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-[#2f2116]">
-                      {currentItem?.name}
-                    </p>
-                    <p className="mt-1 text-sm leading-relaxed text-[#5f4733]">
-                      {currentItem?.info}
-                    </p>
+                  <div className="grid gap-3">
+                    <div className="rounded-[24px] border border-[#dbc3a7] bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(250,240,227,0.92)_100%)] p-4 shadow-[0_14px_32px_rgba(84,56,31,0.08)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7a5d42]">
+                        Lineup note
+                      </p>
+                      <p className="mt-2 text-xl font-semibold text-[#2f2116]">
+                        {currentItem?.name}
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-[#5f4733]">
+                        {currentItem?.info}
+                      </p>
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        <div className="rounded-2xl border border-[#ead7c2] bg-white/80 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-[0.16em] text-[#8b694b]">
+                            Type
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#2f2116]">
+                            {group.label}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-[#ead7c2] bg-white/80 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-[0.16em] text-[#8b694b]">
+                            Count
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#2f2116]">
+                            {group.items.length}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-[#ead7c2] bg-white/80 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-[0.16em] text-[#8b694b]">
+                            Venue
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#2f2116]">
+                            78
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
                     {canRotate ? (
-                      <div className="mt-3 flex gap-2">
+                      <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={prevItem}
-                          className="rounded-lg border border-[#dcc5ab] bg-[#fff9f1] px-3 py-1 text-xs font-semibold text-[#2f2116] transition hover:bg-[#f6ecdf]"
+                          onClick={() =>
+                            setStackedIndexMap((prev) => ({
+                              ...prev,
+                              [group.key]:
+                                ((prev[group.key] ?? 0) - 1 + group.items.length) %
+                                group.items.length,
+                            }))
+                          }
+                          className="flex-1 rounded-2xl border border-[#d9c2a7] bg-white/80 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#2f2116] transition hover:bg-[#f8efe2]"
                         >
                           Prev
                         </button>
                         <button
                           type="button"
-                          onClick={nextItem}
-                          className="rounded-lg border border-[#dcc5ab] bg-[#fff9f1] px-3 py-1 text-xs font-semibold text-[#2f2116] transition hover:bg-[#f6ecdf]"
+                          onClick={() =>
+                            setStackedIndexMap((prev) => ({
+                              ...prev,
+                              [group.key]:
+                                ((prev[group.key] ?? 0) + 1) % group.items.length,
+                            }))
+                          }
+                          className="flex-1 rounded-2xl border border-[#d9c2a7] bg-[#2f2116] px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#fff7eb] transition hover:bg-[#20150d]"
                         >
                           Next
                         </button>
                       </div>
                     ) : null}
 
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {group.items.map((item, idx) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() =>
-                            setStackedIndexMap((prev) => ({
-                              ...prev,
-                              [group.key]: idx,
-                            }))
-                          }
-                          className={[
-                            "h-2.5 rounded-full transition-all",
-                            idx === currentIndex
-                              ? "w-6 bg-[#b2875e]"
-                              : "w-2.5 bg-[#cba886] hover:bg-[#b2875e]",
-                          ].join(" ")}
-                        />
-                      ))}
+                    <div className="rounded-[24px] border border-[#dbc3a7] bg-[linear-gradient(180deg,#fffdf9_0%,#f9efdf_100%)] p-3 shadow-[0_14px_32px_rgba(84,56,31,0.07)]">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7a5d42]">
+                          Profiles reel
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {group.items.map((item, idx) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() =>
+                                setStackedIndexMap((prev) => ({
+                                  ...prev,
+                                  [group.key]: idx,
+                                }))
+                              }
+                              aria-label={`${group.label} profile ${idx + 1}`}
+                              className={[
+                                "h-2.5 rounded-full transition-all",
+                                idx === currentIndex
+                                  ? "w-7 bg-[#9f734e]"
+                                  : "w-2.5 bg-[#d5b08a] hover:bg-[#b2875e]",
+                              ].join(" ")}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid max-h-[240px] gap-2 overflow-y-auto pr-1 sm:max-h-none">
+                        {group.items.map((item, idx) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() =>
+                              setStackedIndexMap((prev) => ({
+                                ...prev,
+                                [group.key]: idx,
+                              }))
+                            }
+                            className={[
+                              "flex items-center justify-between rounded-2xl border px-3 py-3 text-left transition",
+                              idx === currentIndex
+                                ? "border-[#bb8d63] bg-[#2f2116] text-[#fff7eb]"
+                                : "border-[#e7d2bc] bg-white/85 text-[#2f2116] hover:bg-[#fbf4ea]",
+                            ].join(" ")}
+                          >
+                            <span className="min-w-0">
+                              <span className="block text-sm font-semibold">
+                                {item.name}
+                              </span>
+                              <span
+                                className={[
+                                  "mt-1 block text-xs uppercase tracking-[0.16em]",
+                                  idx === currentIndex
+                                    ? "text-[#f3dac0]/80"
+                                    : "text-[#7a5d42]",
+                                ].join(" ")}
+                              >
+                                {group.label}
+                              </span>
+                            </span>
+                            <span
+                              className={[
+                                "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                                idx === currentIndex
+                                  ? "bg-white/10 text-[#f8dfbf]"
+                                  : "bg-[#f4e3d1] text-[#7a5d42]",
+                              ].join(" ")}
+                            >
+                              {idx + 1}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -218,95 +344,67 @@ export default function CollectionsShowcase({
   }
 
   if (!active) return null;
+
   const safeItemIndex = active.items.length
     ? activeItemIndex % active.items.length
     : 0;
   const activeItem = active.items[safeItemIndex] ?? null;
   const canRotate = active.items.length > 1;
-
-  const prevItem = () => {
-    if (!active.items.length) return;
-    setActiveItemIndex(
-      (prev) => (prev - 1 + active.items.length) % active.items.length,
-    );
-  };
-  const nextItem = () => {
-    if (!active.items.length) return;
-    setActiveItemIndex((prev) => (prev + 1) % active.items.length);
-  };
-
   const hasGroupTabs = groups.length > 1;
 
   if (compact) {
     return (
-      <div className="rounded-2xl border border-[#decab3] bg-[linear-gradient(170deg,#fffaf2_0%,#fff4e7_100%)] p-3 shadow-[0_14px_34px_rgba(90,54,24,0.1)]">
+      <div className="min-w-0 overflow-hidden rounded-[28px] border border-[#decab3] bg-[linear-gradient(160deg,#fffaf2_0%,#f7ead9_54%,#efdcc7_100%)] p-2.5 shadow-[0_18px_36px_rgba(90,54,24,0.12)] sm:p-3">
         {active.items.length === 0 ? (
-          <div className="rounded-2xl border border-[#eadccd] bg-white px-4 py-8 text-center text-sm text-[#6f533b]">
-            No performer profiles yet.
-          </div>
+          <EmptyState />
         ) : (
           <div className="grid gap-3">
-            <div className="relative mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-[#eadccd] bg-white sm:max-w-[540px]">
-              {activeItem?.imageUrl ? (
-                <img
-                  src={activeItem.imageUrl}
-                  alt={activeItem.name}
-                  className="h-[230px] w-full object-cover object-center transition duration-500 sm:h-[280px]"
-                />
-              ) : (
-                <div className="flex h-[230px] w-full items-center justify-center bg-[#f5e8d8] px-6 text-center text-2xl font-semibold text-[#6d5038] sm:h-[280px]">
-                  {activeItem?.name}
+            <SpotlightImage item={activeItem} label={active.label} compact />
+
+            <div className="rounded-[22px] border border-[#e0ccb8] bg-white/88 p-3 shadow-[0_12px_26px_rgba(84,56,31,0.08)]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a5d42]">
+                    Spotlight control
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#2f2116]">
+                    {itemCountLabel(active.items.length)}
+                  </p>
                 </div>
-              )}
-
-              <div className="absolute inset-x-0 top-0 p-4">
-                <span className="inline-flex rounded-full border border-[#e8c9a6]/70 bg-[#2f2116]/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f7e4cc]">
-                  {active.label}
-                </span>
-              </div>
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-5">
-                <p className="text-xl font-semibold text-[#fff8ee] sm:text-2xl">
-                  {activeItem?.name}
-                </p>
-                <p className="mt-1 line-clamp-2 text-xs text-[#f5e8d8] sm:text-sm">
-                  {activeItem?.info}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-[#e6d3bc] bg-white/90 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a5d42]">
-                  Spotlight Control
-                </p>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={prevItem}
+                    onClick={() =>
+                      setActiveItemIndex(
+                        (prev) => (prev - 1 + active.items.length) % active.items.length,
+                      )
+                    }
                     disabled={!canRotate}
-                    className="rounded-lg border border-[#dcc5ab] bg-[#fff9f1] px-3 py-1 text-xs font-semibold text-[#2f2116] transition hover:bg-[#f6ecdf] disabled:opacity-50"
+                    className="rounded-xl border border-[#dcc5ab] bg-[#fff9f1] px-3 py-2 text-xs font-semibold text-[#2f2116] transition hover:bg-[#f6ecdf] disabled:opacity-50"
                   >
                     Prev
                   </button>
                   <button
                     type="button"
-                    onClick={nextItem}
+                    onClick={() =>
+                      setActiveItemIndex((prev) => (prev + 1) % active.items.length)
+                    }
                     disabled={!canRotate}
-                    className="rounded-lg border border-[#dcc5ab] bg-[#fff9f1] px-3 py-1 text-xs font-semibold text-[#2f2116] transition hover:bg-[#f6ecdf] disabled:opacity-50"
+                    className="rounded-xl border border-[#dcc5ab] bg-[#2f2116] px-3 py-2 text-xs font-semibold text-[#fff8ee] transition hover:bg-[#20150d] disabled:opacity-50"
                   >
                     Next
                   </button>
                 </div>
               </div>
 
-              <div className="mt-3 grid max-h-[180px] grid-cols-2 gap-2 overflow-y-auto pr-1">
+              <div className="mt-3 grid max-h-[180px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                 {active.items.map((item, index) => (
                   <button
                     key={item.id}
                     onClick={() => setActiveItemIndex(index)}
-                    className={`rounded-lg border px-2.5 py-2 text-left text-xs font-semibold transition ${
+                    className={`rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition ${
                       index === safeItemIndex
-                        ? "border-[#b2875e] bg-[#eecfae] text-[#2f2116]"
+                        ? "border-[#b2875e] bg-[#2f2116] text-[#fff8ee]"
                         : "border-[#eadccd] bg-white text-[#5f4733] hover:bg-[#f7eee2]"
                     }`}
                   >
@@ -322,131 +420,175 @@ export default function CollectionsShowcase({
   }
 
   return (
-    <div
-      className={`grid gap-4 ${compact ? "xl:grid-cols-[230px_1fr]" : "lg:grid-cols-[290px_1fr]"}`}
-    >
-      <aside
-        className={`rounded-2xl border border-[#d9c0a2] bg-[linear-gradient(175deg,#f8efe1_0%,#f2e4d2_100%)] p-3 ${compact ? "xl:h-[66vh]" : "lg:h-[74vh]"}`}
-      >
-        <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a5d42]">
-          Performers
-        </p>
+    <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+      <aside className="overflow-hidden rounded-[28px] border border-[#d4baa0] bg-[linear-gradient(175deg,#3b2a1d_0%,#261910_100%)] p-3 text-[#f6e8d4] shadow-[0_20px_44px_rgba(22,13,7,0.28)]">
+        <div className="rounded-[22px] border border-white/10 bg-white/5 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f2cd9d]/85">
+            Performers
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#f7ead8]/80">
+            Switch between DJ, Artist, and Band lineups.
+          </p>
+        </div>
+
         {hasGroupTabs ? (
-          <div className="mt-3 grid max-h-[45vh] gap-2 overflow-y-auto pr-1">
+          <div className="mt-3 grid gap-2 overflow-y-auto pr-1 lg:max-h-[45vh]">
             {groups.map((group) => (
               <button
                 key={group.key}
-                onClick={() => selectGroup(group.key)}
-                className={`rounded-xl border px-3 py-2 text-left text-sm font-semibold transition ${
+                onClick={() => {
+                  setActiveKey(group.key);
+                  setActiveItemIndex(0);
+                }}
+                className={`rounded-[20px] border px-4 py-3 text-left text-sm font-semibold transition ${
                   activeKey === group.key
-                    ? "border-[#b2875e] bg-[#eecfae] text-[#2f2116]"
-                    : "border-[#eadccd] bg-white/90 text-[#2f2116] hover:bg-[#f7eee2]"
+                    ? "border-[#f0c28e] bg-[linear-gradient(180deg,#f4d2a8_0%,#e8b97b_100%)] text-[#24170f] shadow-[0_12px_24px_rgba(0,0,0,0.24)]"
+                    : "border-white/10 bg-white/5 text-[#f7ead8] hover:bg-white/10"
                 }`}
               >
-                {group.label}
+                <span className="block">{group.label}</span>
+                <span
+                  className={`mt-1 block text-[11px] uppercase tracking-[0.16em] ${
+                    activeKey === group.key ? "text-[#5e4330]" : "text-[#f2cd9d]/70"
+                  }`}
+                >
+                  {itemCountLabel(group.items.length)}
+                </span>
               </button>
             ))}
           </div>
         ) : null}
 
-        <div
-          className={`${hasGroupTabs ? "mt-3" : "mt-4"} rounded-xl border border-[#e3d1bc] bg-white/90 p-3`}
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a5d42]">
-            {active.label}
+        <div className={`${hasGroupTabs ? "mt-3" : "mt-4"} rounded-[22px] border border-white/10 bg-white/5 p-4`}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f2cd9d]/80">
+            Active reel
           </p>
-          <p className="mt-1 text-xs text-[#5f4733]">{active.subtitle}</p>
-          <p className="mt-2 text-sm font-semibold text-[#2f2116]">
-            {active.items.length}{" "}
-            {active.items.length === 1 ? "profile" : "profiles"}
-          </p>
+          <p className="mt-2 text-xl font-semibold text-[#fff8ee]">{active.label}</p>
+          <p className="mt-1 text-xs text-[#f7ead8]/76">{active.subtitle}</p>
+          <div className="mt-3 rounded-2xl border border-white/10 bg-black/15 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-[#f2cd9d]/70">
+              Profiles
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-[#fff8ee]">
+              {active.items.length}
+            </p>
+          </div>
         </div>
       </aside>
 
-      <article className="min-w-0 rounded-3xl border border-[#decab3] bg-[linear-gradient(170deg,#fffaf2_0%,#fff4e7_100%)] p-4 shadow-[0_14px_34px_rgba(90,54,24,0.1)] md:p-5">
+      <article className="min-w-0 overflow-hidden rounded-[30px] border border-[#decab3] bg-[linear-gradient(165deg,#fffaf2_0%,#f6e6d3_58%,#efd8bb_100%)] p-4 shadow-[0_20px_40px_rgba(90,54,24,0.12)] md:p-5">
         {active.items.length === 0 ? (
-          <div className="rounded-2xl border border-[#eadccd] bg-white px-4 py-8 text-center text-sm text-[#6f533b]">
-            No performer profiles yet.
-          </div>
+          <EmptyState />
         ) : (
-          <div
-            className={`grid gap-3 ${compact ? "md:grid-cols-[1fr_250px]" : "lg:grid-cols-[1fr_270px]"}`}
-          >
-            <div className="relative mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-[#eadccd] bg-white sm:max-w-[700px]">
-              {activeItem?.imageUrl ? (
-                <img
-                  src={activeItem.imageUrl}
-                  alt={activeItem.name}
-                  className={`w-full object-cover object-center transition duration-500 ${compact ? "h-[300px] sm:h-[330px]" : "h-[320px] sm:h-[390px]"}`}
-                />
-              ) : (
-                <div
-                  className={`flex w-full items-center justify-center bg-[#f5e8d8] px-6 text-center text-2xl font-semibold text-[#6d5038] ${compact ? "h-[300px] sm:h-[330px]" : "h-[320px] sm:h-[390px]"}`}
-                >
-                  {activeItem?.name}
-                </div>
-              )}
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_300px]">
+            <SpotlightImage item={activeItem} label={active.label} />
 
-              <div className="absolute inset-x-0 top-0 p-4">
-                <span className="inline-flex rounded-full border border-[#e8c9a6]/70 bg-[#2f2116]/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f7e4cc]">
-                  {active.label}
-                </span>
-              </div>
-
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-5">
-                <p className="text-2xl font-semibold text-[#fff8ee]">
+            <div className="grid gap-3">
+              <div className="rounded-[24px] border border-[#e2ccb7] bg-white/88 p-4 shadow-[0_14px_28px_rgba(84,56,31,0.08)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7a5d42]">
+                  Spotlight notes
+                </p>
+                <p className="mt-2 text-lg font-semibold text-[#2f2116]">
                   {activeItem?.name}
                 </p>
-                <p className="mt-1 max-w-3xl text-sm text-[#f5e8d8]">
+                <p className="mt-2 text-sm leading-relaxed text-[#5f4733]">
                   {activeItem?.info}
                 </p>
               </div>
-            </div>
 
-            <div className="rounded-2xl border border-[#e6d3bc] bg-white/90 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a5d42]">
-                Now Showing
-              </p>
-              <p className="mt-1 text-base font-semibold text-[#2f2116]">
-                {activeItem?.name}
-              </p>
-              <p className="mt-1 line-clamp-4 text-xs leading-relaxed text-[#5f4733]">
-                {activeItem?.info}
-              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-[20px] border border-[#e3d0bb] bg-white/78 px-3 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-[#8b694b]">
+                    Type
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#2f2116]">
+                    {active.label}
+                  </p>
+                </div>
+                <div className="rounded-[20px] border border-[#e3d0bb] bg-white/78 px-3 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-[#8b694b]">
+                    Profiles
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#2f2116]">
+                    {active.items.length}
+                  </p>
+                </div>
+                <div className="rounded-[20px] border border-[#e3d0bb] bg-white/78 px-3 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-[#8b694b]">
+                    Venue
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#2f2116]">
+                    78
+                  </p>
+                </div>
+              </div>
 
-              <div className="mt-3 flex gap-2">
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={prevItem}
+                  onClick={() =>
+                    setActiveItemIndex(
+                      (prev) => (prev - 1 + active.items.length) % active.items.length,
+                    )
+                  }
                   disabled={!canRotate}
-                  className="rounded-lg border border-[#dcc5ab] bg-[#fff9f1] px-3 py-1 text-xs font-semibold text-[#2f2116] transition hover:bg-[#f6ecdf] disabled:opacity-50"
+                  className="flex-1 rounded-2xl border border-[#dcc5ab] bg-[#fff9f1] px-3 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#2f2116] transition hover:bg-[#f6ecdf] disabled:opacity-50"
                 >
                   Prev
                 </button>
                 <button
                   type="button"
-                  onClick={nextItem}
+                  onClick={() =>
+                    setActiveItemIndex((prev) => (prev + 1) % active.items.length)
+                  }
                   disabled={!canRotate}
-                  className="rounded-lg border border-[#dcc5ab] bg-[#fff9f1] px-3 py-1 text-xs font-semibold text-[#2f2116] transition hover:bg-[#f6ecdf] disabled:opacity-50"
+                  className="flex-1 rounded-2xl border border-[#dcc5ab] bg-[#2f2116] px-3 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#fff8ee] transition hover:bg-[#20150d] disabled:opacity-50"
                 >
                   Next
                 </button>
               </div>
 
-              <div className="mt-3 grid max-h-[230px] gap-2 overflow-y-auto pr-1">
-                {active.items.map((item, index) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveItemIndex(index)}
-                    className={`rounded-lg border px-3 py-2 text-left text-xs font-semibold transition ${
-                      index === safeItemIndex
-                        ? "border-[#b2875e] bg-[#eecfae] text-[#2f2116]"
-                        : "border-[#eadccd] bg-white text-[#5f4733] hover:bg-[#f7eee2]"
-                    }`}
-                  >
-                    {item.name}
-                  </button>
-                ))}
+              <div className="rounded-[24px] border border-[#e2ccb7] bg-[linear-gradient(180deg,#fffefb_0%,#f7ecdd_100%)] p-3 shadow-[0_14px_28px_rgba(84,56,31,0.07)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7a5d42]">
+                  Performer reel
+                </p>
+                <div className="mt-3 grid max-h-[250px] gap-2 overflow-y-auto pr-1">
+                  {active.items.map((item, index) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveItemIndex(index)}
+                      className={`flex items-center justify-between rounded-2xl border px-3 py-3 text-left text-xs font-semibold transition ${
+                        index === safeItemIndex
+                          ? "border-[#b2875e] bg-[#2f2116] text-[#fff8ee]"
+                          : "border-[#eadccd] bg-white text-[#5f4733] hover:bg-[#f7eee2]"
+                      }`}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold">
+                          {item.name}
+                        </span>
+                        <span
+                          className={`mt-1 block text-[10px] uppercase tracking-[0.16em] ${
+                            index === safeItemIndex
+                              ? "text-[#f3dac0]/70"
+                              : "text-[#8b694b]"
+                          }`}
+                        >
+                          {active.label}
+                        </span>
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                          index === safeItemIndex
+                            ? "bg-white/10 text-[#f8dfbf]"
+                            : "bg-[#f4e3d1] text-[#7a5d42]"
+                        }`}
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

@@ -11,6 +11,7 @@ type Row = {
   tableNo: number;
   guests: number;
   reservedFor: string;
+  surchargeAmount: number;
   status: string;
   createdAt: string;
   note: string | null;
@@ -103,14 +104,14 @@ export default function ReservationRoot() {
   );
 
   return (
-    <main className="reservation-shell mx-auto max-w-6xl px-4 pt-24 pb-16">
-      <section className="reservation-panel rounded-2xl p-6">
+    <main className="reservation-shell mx-auto max-w-6xl px-3 pt-22 pb-14 sm:px-4 sm:pt-24 sm:pb-16">
+      <section className="reservation-panel rounded-2xl p-4 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="jazz-heading text-amber-200">
               {tr(locale, "Profile", "Профайл")}
             </p>
-            <h1 className="jazz-heading text-4xl text-amber-50">
+            <h1 className="jazz-heading text-[2rem] text-amber-50 sm:text-4xl">
               {tr(locale, "My Reservations", "Миний захиалгууд")}
             </h1>
             <p className="mt-1 text-sm text-amber-100/70">
@@ -161,7 +162,7 @@ export default function ReservationRoot() {
             </div>
           ) : (
             rows.map((r) => {
-              const expected = (r.event?.price || 0) * r.guests;
+              const expected = (r.event?.price || 0) * r.guests + (r.surchargeAmount || 0);
               const ref = `RSV-T${r.tableNo}-${r.id.slice(0, 8).toUpperCase()}`;
               return (
                 <article
@@ -203,6 +204,14 @@ export default function ReservationRoot() {
                       {expected.toLocaleString()} {r.event?.currency || "MNT"}
                     </span>
                   </p>
+                  {r.surchargeAmount > 0 ? (
+                    <p className="mt-1 text-xs text-amber-100/70">
+                      {tr(locale, "Surcharge", "Нэмэгдэл")}:{" "}
+                      <span className="font-semibold text-amber-200">
+                        +{r.surchargeAmount.toLocaleString()} {r.event?.currency || "MNT"}
+                      </span>
+                    </p>
+                  ) : null}
                   {r.note ? (
                     <p className="mt-2 text-xs text-amber-100/80">
                       {tr(locale, "Note", "Тэмдэглэл")}: {r.note}

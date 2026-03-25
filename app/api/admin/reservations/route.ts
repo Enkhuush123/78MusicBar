@@ -2,6 +2,15 @@
 import { prisma } from "@/lib/prisma";
 import { getSupabaseUserFromRequest } from "@/lib/auth";
 import { requireAdmin } from "@/lib/admin";
+import { getReservationSurcharge } from "@/lib/reservation-pricing";
+
+function isSameLocalDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
 
 export async function GET(req: Request) {
   await requireAdmin();
@@ -43,6 +52,7 @@ export async function GET(req: Request) {
       tableNo: true,
       guests: true,
       reservedFor: true,
+      surchargeAmount: true,
       note: true,
       status: true,
       createdAt: true,
@@ -93,7 +103,20 @@ export async function POST(req: Request) {
     return Response.json({ message: "Event not available" }, { status: 404 });
   }
 
-  const reservedFor = event.startsAt;
+  const reservedFor = body?.reservedFor
+    ? new Date(body.reservedFor)
+    : event.startsAt;
+
+  if (Number.isNaN(reservedFor.getTime())) {
+    return Response.json({ message: "invalid reservedFor" }, { status: 400 });
+  }
+
+  if (!isSameLocalDay(reservedFor, event.startsAt)) {
+    return Response.json(
+      { message: "Reservation must be on the same event day" },
+      { status: 400 },
+    );
+  }
 
   const user = getSupabaseUserFromRequest(req);
 
@@ -108,12 +131,25 @@ export async function POST(req: Request) {
   }
 
   try {
+    const activeReservations = await prisma.reservation.count({
+      where: {
+        eventId,
+        reservedFor,
+        status: { notIn: ["cancelled", "rejected"] },
+      },
+    });
+    const surchargeAmount = getReservationSurcharge(
+      reservedFor,
+      activeReservations,
+    );
+
     const reservation = await prisma.reservation.create({
       data: {
         eventId,
         guests,
         tableNo,
         reservedFor,
+        surchargeAmount,
         note: note || null,
         status: "confirmed",
 

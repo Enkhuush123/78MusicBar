@@ -7,6 +7,13 @@ import { Armchair } from "lucide-react";
 import { supabase as supabaseClient } from "@/lib/supabase/browser";
 import { useLocale } from "@/app/components/use-locale";
 import { tr } from "@/lib/i18n";
+import {
+  combineDateAndTime,
+  pad2,
+  toDateInput,
+  toTimeInput,
+} from "@/lib/datetime";
+import { getReservationSurcharge } from "@/lib/reservation-pricing";
 
 type Props = {
   eventId: string;
@@ -35,6 +42,7 @@ type PaymentTicket = {
   reservationId: string;
   tableNo: number;
   amount: number;
+  surchargeAmount: number;
   currency: string;
   reference: string;
   status: "pending_payment" | "confirmed" | "cancelled" | "rejected";
@@ -77,22 +85,12 @@ function parseSeats(range: SeatRange) {
   return { min: a, max: b };
 }
 
-function pad(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-function toDateTimeLocal(d: Date) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours(),
-  )}:${pad(d.getMinutes())}`;
-}
-
 function formatDateTime(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(
+  return `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())} ${pad2(
     d.getHours(),
-  )}:${pad(d.getMinutes())}`;
+  )}:${pad2(d.getMinutes())}`;
 }
 
 function ZoneBlock({
@@ -190,15 +188,20 @@ export default function ReservationClient({
   );
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
-  const [reservedForLocal, setReservedForLocal] = useState(() => {
-    const d = new Date(startsAt);
-    d.setSeconds(0, 0);
-    return toDateTimeLocal(d);
-  });
+  const eventDate = useMemo(() => toDateInput(startsAt), [startsAt]);
+  const [reservedTime, setReservedTime] = useState(() => toTimeInput(startsAt));
+  const reservedForLocal = useMemo(
+    () => combineDateAndTime(eventDate, reservedTime),
+    [eventDate, reservedTime],
+  );
 
   const [reservedSet, setReservedSet] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReservedTime(toTimeInput(startsAt));
+  }, [startsAt]);
 
   useEffect(() => {
     const load = async () => {
@@ -225,6 +228,7 @@ export default function ReservationClient({
     const run = async () => {
       setMsg(null);
       setSelected(null);
+      if (!reservedForLocal) return;
 
       const iso = new Date(reservedForLocal).toISOString();
       const res = await fetch(
@@ -261,7 +265,11 @@ export default function ReservationClient({
   const minPeople = seat.min;
   const maxPeople = seat.max;
   const safePeople = Math.min(Math.max(minPeople, people), maxPeople);
-  const totalPrice = safePeople * eventPrice;
+  const surchargeAmount = useMemo(
+    () => getReservationSurcharge(reservedForLocal, reservedSet.size),
+    [reservedForLocal, reservedSet],
+  );
+  const totalPrice = safePeople * eventPrice + surchargeAmount;
 
   useEffect(() => {
     if (!current) return;
@@ -269,6 +277,7 @@ export default function ReservationClient({
   }, [current]);
 
   const refreshReserved = async () => {
+    if (!reservedForLocal) return;
     const iso = new Date(reservedForLocal).toISOString();
     const res = await fetch(
       `/api/reservations?eventId=${encodeURIComponent(eventId)}&reservedFor=${encodeURIComponent(iso)}`,
@@ -280,6 +289,17 @@ export default function ReservationClient({
   };
 
   const submitReservation = async () => {
+    if (!reservedForLocal) {
+      setMsg(
+        tr(
+          locale,
+          "Please choose a reservation time.",
+          "Захиалах цагаа сонгоно уу.",
+        ),
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       const payload: any = {
@@ -319,11 +339,15 @@ export default function ReservationClient({
 
         if (reservationId) {
           const tableNo = Number(current?.label ?? 0);
-          const reference = `RSV-T${tableNo}-${reservationId.slice(0, 8).toUpperCase()}`;
+          const reference = String(
+            data?.payment?.reference ??
+              `RSV-T${tableNo}-${reservationId.slice(0, 8).toUpperCase()}`,
+          );
           setPaymentTicket({
             reservationId,
             tableNo,
-            amount: totalPrice,
+            amount: Number(data?.payment?.totalAmount ?? totalPrice),
+            surchargeAmount: Number(data?.payment?.surchargeAmount ?? surchargeAmount),
             currency: eventCurrency,
             reference,
             status: "pending_payment",
@@ -447,10 +471,10 @@ export default function ReservationClient({
   }, [paymentDialogOpen, paymentTicket?.status]);
 
   return (
-    <main className="reservation-shell mx-auto max-w-6xl px-4 py-20">
+    <main className="reservation-shell mx-auto max-w-6xl px-3 py-16 sm:px-4 sm:py-20">
       <section className="reservation-panel mb-8 overflow-hidden rounded-2xl">
         <div className="grid md:grid-cols-[260px_1fr]">
-          <div className="relative h-52 md:h-full">
+          <div className="relative h-44 sm:h-52 md:h-full">
             {eventImageUrl ? (
               <img
                 src={eventImageUrl}
@@ -465,11 +489,11 @@ export default function ReservationClient({
             <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0 md:bg-gradient-to-r md:from-black/25 md:via-black/0 md:to-black/0" />
           </div>
 
-          <div className="p-5 md:p-6">
+          <div className="p-4 sm:p-5 md:p-6">
             <p className="jazz-heading text-sm text-amber-200">
               {tr(locale, "Event", "Эвент")}
             </p>
-            <h1 className="jazz-heading mt-1 text-4xl text-amber-50">
+            <h1 className="jazz-heading mt-1 text-[2rem] text-amber-50 sm:text-4xl">
               {eventTitle}
             </h1>
 
@@ -491,6 +515,14 @@ export default function ReservationClient({
                   {totalPrice.toLocaleString()} {eventCurrency}
                 </span>
               </p>
+              {surchargeAmount > 0 ? (
+                <p className="mt-1 text-amber-100/90">
+                  ⚠ {tr(locale, "Busy / late surcharge", "Ачаалал / оройн нэмэгдэл")}:{" "}
+                  <span className="font-semibold text-amber-200">
+                    +{surchargeAmount.toLocaleString()} {eventCurrency}
+                  </span>
+                </p>
+              ) : null}
             </div>
 
             {eventDescription ? (
@@ -506,7 +538,7 @@ export default function ReservationClient({
         </div>
       </section>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="mt-5 grid gap-4 sm:gap-6 lg:grid-cols-[1fr_360px]">
         <div className="reservation-panel rounded-2xl p-4">
           <div className="mb-4 rounded-xl bg-[linear-gradient(180deg,#f5d7aa_0%,#e9b873_100%)] py-3 text-center text-sm font-semibold text-neutral-900">
             {tr(locale, "STAGE", "ТАЙЗ")}
@@ -555,8 +587,8 @@ export default function ReservationClient({
           </div>
         </div>
 
-        <div className="reservation-panel rounded-2xl p-5 shadow-sm">
-          <h3 className="jazz-heading text-2xl text-amber-50">
+        <div className="reservation-panel rounded-2xl p-4 sm:p-5 shadow-sm">
+          <h3 className="jazz-heading text-[1.7rem] text-amber-50 sm:text-2xl">
             {tr(locale, "Reservation Details", "Захиалгын мэдээлэл")}
           </h3>
 
@@ -565,12 +597,38 @@ export default function ReservationClient({
               <p className="text-sm text-amber-100/70">
                 {tr(locale, "Date / Time", "Огноо / цаг")}
               </p>
-              <input
-                type="datetime-local"
-                value={reservedForLocal}
-                onChange={(e) => setReservedForLocal(e.target.value)}
-                className="mt-2 w-full rounded-md px-3 py-2 text-amber-50"
-              />
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-amber-100/60">
+                    {tr(locale, "Event day", "Эвентийн өдөр")}
+                  </p>
+                  <input
+                    type="date"
+                    value={eventDate}
+                    readOnly
+                    className="mt-1 w-full rounded-md px-3 py-2 text-amber-50 opacity-80"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-amber-100/60">
+                    {tr(locale, "Reservation time", "Захиалах цаг")}
+                  </p>
+                  <input
+                    type="time"
+                    step={300}
+                    value={reservedTime}
+                    onChange={(e) => setReservedTime(e.target.value)}
+                    className="mt-1 w-full rounded-md px-3 py-2 text-amber-50"
+                  />
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-amber-100/70">
+                {tr(
+                  locale,
+                  "Choose the exact arrival time for this event day.",
+                  "Энэ өдрийн яг хэдэн цагт ирэхээ сонгоно уу.",
+                )}
+              </p>
               <p className="mt-2 text-xs text-amber-100/70">
                 {isLoggedIn
                   ? tr(
@@ -668,6 +726,13 @@ export default function ReservationClient({
                 "30 минутаас дээш хоцорвол захиалга автоматаар цуцлагдаж, төлбөр буцаан олгогдохгүй.",
               )}
             </p>
+            <p className="mt-2">
+              {tr(
+                locale,
+                "Reservations after 21:00 or during busy table load may include an extra 5,000-10,000 MNT table surcharge.",
+                "21:00 цагаас хойш эсвэл ачаалал их үед ширээ бүрт 5,000-10,000 төгрөгийн нэмэгдэл тооцогдож болно.",
+              )}
+            </p>
           </div>
 
           <button
@@ -761,6 +826,15 @@ export default function ReservationClient({
                   {paymentTicket.currency}
                 </span>
               </p>
+              {paymentTicket.surchargeAmount > 0 ? (
+                <p>
+                  {tr(locale, "Surcharge", "Нэмэгдэл")}:{" "}
+                  <span className="font-semibold">
+                    +{paymentTicket.surchargeAmount.toLocaleString()}{" "}
+                    {paymentTicket.currency}
+                  </span>
+                </p>
+              ) : null}
               <p>
                 {tr(locale, "Bank", "Банк")}:{" "}
                 <span className="font-semibold">{BANK_NAME}</span>

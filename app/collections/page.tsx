@@ -85,18 +85,18 @@ export default async function CollectionsPage() {
   );
 
   return (
-    <main className="relative overflow-hidden pt-24 pb-12">
-      <div className="pointer-events-none absolute inset-x-0 top-8 h-[420px] bg-[radial-gradient(circle_at_10%_20%,rgba(234,184,112,0.24),transparent_42%),radial-gradient(circle_at_85%_10%,rgba(133,93,58,0.18),transparent_40%)]" />
+    <main className="relative overflow-hidden pt-22 pb-10 sm:pt-24 sm:pb-12">
+      <div className="pointer-events-none absolute inset-x-0 top-8 h-[300px] bg-[radial-gradient(circle_at_10%_20%,rgba(234,184,112,0.24),transparent_42%),radial-gradient(circle_at_85%_10%,rgba(133,93,58,0.18),transparent_40%)] sm:h-[420px]" />
 
       <section className="mx-auto max-w-7xl px-4">
-        <div className="relative overflow-hidden rounded-3xl border border-[#d7bea1] bg-[linear-gradient(155deg,#f7ecde_0%,#efdfcc_52%,#e7d4bd_100%)] p-6 shadow-[0_18px_44px_rgba(66,42,23,0.14)] md:p-8">
+        <div className="relative overflow-hidden rounded-3xl border border-[#d7bea1] bg-[linear-gradient(155deg,#f7ecde_0%,#efdfcc_52%,#e7d4bd_100%)] p-5 shadow-[0_18px_44px_rgba(66,42,23,0.14)] md:p-8">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.36),transparent_38%)]" />
           <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="jazz-heading text-xs uppercase tracking-[0.2em] text-[#7a5d42]">
                 Collections
               </p>
-              <h1 className="jazz-heading mt-2 text-5xl text-[#2f2116]">
+              <h1 className="jazz-heading mt-2 text-[2.5rem] text-[#2f2116] sm:text-5xl">
                 {tr(
                   locale,
                   "Our DJs, Artists & Bands",
@@ -112,7 +112,7 @@ export default async function CollectionsPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 md:w-[280px]">
+            <div className="grid w-full grid-cols-2 gap-2 md:w-[280px]">
               <div className="rounded-2xl border border-[#d9c2a7] bg-[#fff8ef]/80 px-4 py-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7a5d42]">
                   {tr(locale, "Performers", "Уран бүтээлч")}
@@ -133,7 +133,7 @@ export default async function CollectionsPage() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-3xl border border-[#d9c2a7] bg-[linear-gradient(180deg,#f5ebde_0%,#efe2d1_100%)] p-3">
+        <div className="mt-4 rounded-3xl border border-[#d9c2a7] bg-[linear-gradient(180deg,#f5ebde_0%,#efe2d1_100%)] p-2.5 sm:mt-5 sm:p-3">
           <CollectionsShowcase groups={performerGroups} stacked />
         </div>
       </section>

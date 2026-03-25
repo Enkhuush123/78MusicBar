@@ -79,21 +79,21 @@ export default function ReviewsSection({
 
   return (
     <section className={embedded ? "" : "mx-auto max-w-6xl px-4 pb-12"}>
-      <div className="jazz-panel rounded-3xl p-4 sm:p-6 md:p-8">
+      <div className="jazz-panel min-w-0 rounded-3xl p-4 sm:p-6 md:p-8">
         <div className="mb-5">
           <p className="ger-kicker text-amber-200">
             {tr(locale, "Community", "Хэрэглэгчдийн Сэтгэгдэл")}
           </p>
-          <h2 className="jazz-heading text-3xl text-amber-50 sm:text-4xl">
+          <h2 className="jazz-heading text-[1.9rem] text-amber-50 sm:text-4xl">
             {tr(locale, "Customer Reviews", "Үйлчлүүлэгчдийн Үнэлгээ")}
           </h2>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
           {reviews.slice(0, 6).map((r) => (
             <div
               key={r.id}
-              className="rounded-2xl border border-amber-300/25 bg-black/20 p-4"
+              className="min-w-0 rounded-2xl border border-amber-300/25 bg-black/20 p-4"
             >
               <p className="text-sm font-semibold text-amber-50">
                 @{r.displayName}

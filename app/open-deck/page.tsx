@@ -48,11 +48,11 @@ export default async function OpenDeckPage() {
     .catch(() => []);
 
   return (
-    <main className="pt-24">
-      <section className="mx-auto max-w-7xl px-4 pb-12">
+    <main className="pt-22 sm:pt-24">
+      <section className="mx-auto max-w-7xl px-3 pb-10 sm:px-4 sm:pb-12">
         <div className="mb-5">
           <p className="jazz-heading text-[#7a5d42]">Open Deck</p>
-          <h1 className="jazz-heading text-5xl text-[#2f2116]">
+          <h1 className="jazz-heading text-[2.5rem] text-[#2f2116] sm:text-5xl">
             {tr(locale, "DJ Open Deck", "DJ Open Deck")}
           </h1>
         </div>
