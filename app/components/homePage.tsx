@@ -60,34 +60,72 @@ function uniqueUrls(values: Array<string | null | undefined>) {
   return out;
 }
 
+async function safeDb<T>(
+  label: string,
+  run: () => Promise<T>,
+  fallback: T,
+): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    console.error(`[HomePage] ${label} failed`, error);
+    return fallback;
+  }
+}
+
 export default async function HomePage() {
   const locale = await getServerLocale();
   const now = new Date();
 
-  const hero = await prisma.homeHero.findFirst({
-    where: { isActive: true },
-    orderBy: { updatedAt: "desc" },
-  });
-  const heroSlides = await prisma.homeImage.findMany({
-    orderBy: [{ sort: "asc" }, { createdAt: "desc" }],
-    take: 40,
-  });
-  const homeGalleryPage = await prisma.sitePage.findUnique({
-    where: { slug: HOME_GALLERY_SLUG },
-  });
-  const homeInstagramPage = await prisma.sitePage.findUnique({
-    where: { slug: HOME_INSTAGRAM_POSTS_SLUG },
-  });
+  const hero = await safeDb(
+    "homeHero.findFirst",
+    () =>
+      prisma.homeHero.findFirst({
+        where: { isActive: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+    null,
+  );
+  const heroSlides = await safeDb(
+    "homeImage.findMany",
+    () =>
+      prisma.homeImage.findMany({
+        orderBy: [{ sort: "asc" }, { createdAt: "desc" }],
+        take: 40,
+      }),
+    [],
+  );
+  const homeGalleryPage = await safeDb(
+    "sitePage.findUnique(homeGallery)",
+    () =>
+      prisma.sitePage.findUnique({
+        where: { slug: HOME_GALLERY_SLUG },
+      }),
+    null,
+  );
+  const homeInstagramPage = await safeDb(
+    "sitePage.findUnique(homeInstagram)",
+    () =>
+      prisma.sitePage.findUnique({
+        where: { slug: HOME_INSTAGRAM_POSTS_SLUG },
+      }),
+    null,
+  );
 
-  const manualFeatured = await prisma.homeFeaturedEvent.findMany({
-    where: {
-      isActive: true,
-      event: { isPublished: true, startsAt: { gte: now } },
-    },
-    orderBy: [{ sort: "asc" }, { updatedAt: "desc" }],
-    include: { event: true },
-    take: 8,
-  });
+  const manualFeatured = await safeDb(
+    "homeFeaturedEvent.findMany",
+    () =>
+      prisma.homeFeaturedEvent.findMany({
+        where: {
+          isActive: true,
+          event: { isPublished: true, startsAt: { gte: now } },
+        },
+        orderBy: [{ sort: "asc" }, { updatedAt: "desc" }],
+        include: { event: true },
+        take: 8,
+      }),
+    [],
+  );
 
   const manualSpecial = manualFeatured.find((x) => x.sort === 0)?.event;
   const manualUpcoming = manualFeatured
@@ -97,38 +135,56 @@ export default async function HomePage() {
 
   const featured =
     manualSpecial ??
-    (await prisma.event.findFirst({
-      where: { isPublished: true, isFeatured: true, startsAt: { gte: now } },
-      orderBy: { startsAt: "asc" },
-    })) ??
-    (await prisma.event.findFirst({
-      where: { isPublished: true, startsAt: { gte: now } },
-      orderBy: { startsAt: "asc" },
-    }));
+    (await safeDb(
+      "event.findFirst(featured)",
+      () =>
+        prisma.event.findFirst({
+          where: { isPublished: true, isFeatured: true, startsAt: { gte: now } },
+          orderBy: { startsAt: "asc" },
+        }),
+      null,
+    )) ??
+    (await safeDb(
+      "event.findFirst(upcomingFallback)",
+      () =>
+        prisma.event.findFirst({
+          where: { isPublished: true, startsAt: { gte: now } },
+          orderBy: { startsAt: "asc" },
+        }),
+      null,
+    ));
 
   const selectedUpcoming = manualUpcoming.filter((x) => x.id !== featured?.id);
 
-  const upcoming = await prisma.event.findMany({
-    where: {
-      isPublished: true,
-      startsAt: { gte: now },
-      ...(featured ? { NOT: { id: featured.id } } : {}),
-      ...(selectedUpcoming.length
-        ? { NOT: { id: { in: selectedUpcoming.map((e) => e.id) } } }
-        : {}),
-    },
-    orderBy: { startsAt: "asc" },
-    take: 6,
-  });
+  const upcoming = await safeDb(
+    "event.findMany(upcoming)",
+    () =>
+      prisma.event.findMany({
+        where: {
+          isPublished: true,
+          startsAt: { gte: now },
+          ...(featured ? { NOT: { id: featured.id } } : {}),
+          ...(selectedUpcoming.length
+            ? { NOT: { id: { in: selectedUpcoming.map((e) => e.id) } } }
+            : {}),
+        },
+        orderBy: { startsAt: "asc" },
+        take: 6,
+      }),
+    [],
+  );
 
-  const reviews = await prisma.review
-    .findMany({
-      where: { isApproved: true },
-      orderBy: { createdAt: "desc" },
-      take: 12,
-      select: { id: true, displayName: true, comment: true, rating: true },
-    })
-    .catch(() => []);
+  const reviews = await safeDb(
+    "review.findMany",
+    () =>
+      prisma.review.findMany({
+        where: { isApproved: true },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: { id: true, displayName: true, comment: true, rating: true },
+      }),
+    [],
+  );
 
   const collectionsDelegate = (
     prisma as unknown as {
@@ -157,18 +213,21 @@ export default async function HomePage() {
   ).collectionCategory;
 
   const categories = collectionsDelegate
-    ? await collectionsDelegate
-        .findMany({
-          where: { isActive: true },
-          orderBy: [{ sort: "asc" }, { createdAt: "asc" }],
-          include: {
-            items: {
-              where: { isActive: true },
-              orderBy: [{ sort: "asc" }, { createdAt: "desc" }],
+    ? await safeDb(
+        "collectionCategory.findMany",
+        () =>
+          collectionsDelegate.findMany({
+            where: { isActive: true },
+            orderBy: [{ sort: "asc" }, { createdAt: "asc" }],
+            include: {
+              items: {
+                where: { isActive: true },
+                orderBy: [{ sort: "asc" }, { createdAt: "desc" }],
+              },
             },
-          },
-        })
-        .catch(() => [])
+          }),
+        [],
+      )
     : [];
 
   const openDeckDelegate = (
@@ -192,26 +251,29 @@ export default async function HomePage() {
   ).openDeckReservation;
 
   const approvedOpenDeck = openDeckDelegate
-    ? await openDeckDelegate
-        .findMany({
-          where: { status: "approved" },
-          orderBy: [{ slot: { startsAt: "asc" } }, { approvedAt: "desc" }],
-          take: 12,
-          select: {
-            id: true,
-            djName: true,
-            genre: true,
-            socialUrl: true,
-            slot: {
-              select: {
-                startsAt: true,
-                endsAt: true,
-                day: { select: { eventDate: true } },
+    ? await safeDb(
+        "openDeckReservation.findMany",
+        () =>
+          openDeckDelegate.findMany({
+            where: { status: "approved" },
+            orderBy: [{ slot: { startsAt: "asc" } }, { approvedAt: "desc" }],
+            take: 12,
+            select: {
+              id: true,
+              djName: true,
+              genre: true,
+              socialUrl: true,
+              slot: {
+                select: {
+                  startsAt: true,
+                  endsAt: true,
+                  day: { select: { eventDate: true } },
+                },
               },
             },
-          },
-        })
-        .catch(() => [])
+          }),
+        [],
+      )
     : [];
 
   const categoryByType = new Map<
