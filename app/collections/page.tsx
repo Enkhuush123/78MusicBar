@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerLocale } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 import CollectionsShowcase from "@/app/components/collections-showcase";
+import CollectionsSidebar from "@/app/components/collections-sidebar";
 
 const FIXED_TYPES = [
   { key: "dj", nameEn: "DJ", nameMn: "DJ" },
@@ -133,8 +134,19 @@ export default async function CollectionsPage() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-3xl border border-[#d9c2a7] bg-[linear-gradient(180deg,#f5ebde_0%,#efe2d1_100%)] p-2.5 sm:mt-5 sm:p-3">
-          <CollectionsShowcase groups={performerGroups} stacked />
+        <div className="mt-4 grid gap-4 sm:mt-5 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <CollectionsSidebar
+            items={performerGroups.map((group) => ({
+              id: group.key,
+              label: group.label,
+              count: group.items.length,
+              subtitle: group.subtitle,
+            }))}
+          />
+
+          <div className="rounded-3xl border border-[#d9c2a7] bg-[linear-gradient(180deg,#f5ebde_0%,#efe2d1_100%)] p-2.5 sm:p-3">
+            <CollectionsShowcase groups={performerGroups} stacked />
+          </div>
         </div>
       </section>
     </main>

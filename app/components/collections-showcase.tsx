@@ -161,6 +161,7 @@ export default function CollectionsShowcase({
           return (
             <section
               key={group.key}
+              id={group.key}
               className="relative overflow-hidden rounded-[32px] border border-[#d8c0a1] bg-[linear-gradient(160deg,#fff8ee_0%,#f4e6d5_58%,#ecd6bb_100%)] p-4 shadow-[0_18px_36px_rgba(85,53,28,0.12)]"
             >
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(255,255,255,0.56),transparent_28%),radial-gradient(circle_at_88%_10%,rgba(187,133,81,0.22),transparent_26%)]" />
