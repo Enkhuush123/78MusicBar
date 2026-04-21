@@ -52,6 +52,8 @@ export default function AdminReservationsPage() {
   >("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [paymentRequired, setPaymentRequired] = useState(true);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     mode: "cancel" | "delete";
@@ -95,14 +97,49 @@ export default function AdminReservationsPage() {
     }
   };
 
+  const loadSettings = async () => {
+    const res = await fetch("/api/admin/reservations/settings", {
+      cache: "no-store",
+    }).catch(() => null);
+    if (!res?.ok) return;
+    const data = (await res.json()) as { paymentRequired?: boolean };
+    setPaymentRequired(data.paymentRequired !== false);
+  };
+
   useEffect(() => {
     load();
+    loadSettings();
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") load();
     }, 5000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const togglePaymentRequired = async () => {
+    const next = !paymentRequired;
+    setSettingsSaving(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/reservations/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentRequired: next }),
+      });
+      if (!res.ok) {
+        setMsg(tr(locale, "Payment setting update failed", "Төлбөрийн тохиргоо хадгалагдсангүй"));
+        return;
+      }
+      setPaymentRequired(next);
+      setMsg(
+        next
+          ? tr(locale, "Payment is now required for new reservations.", "Шинэ захиалгад төлбөр шаардана.")
+          : tr(locale, "New reservations will now be confirmed automatically.", "Шинэ захиалга шууд баталгааждаг боллоо."),
+      );
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
 
   const cancel = async (id: string) => {
     const res = await fetch(`/api/admin/reservations/${id}`, {
@@ -297,6 +334,36 @@ export default function AdminReservationsPage() {
           disabled={loading}
         >
           {loading ? "Loading..." : tr(locale, "Filter", "Шүүх")}
+        </button>
+      </div>
+
+      <div className="reservation-soft mt-3 flex flex-col gap-3 rounded-2xl p-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-amber-50">
+            {tr(locale, "Reservation Payment", "Захиалгын төлбөр")}
+          </p>
+          <p className="text-xs text-amber-100/80">
+            {paymentRequired
+              ? tr(locale, "Customers must transfer payment and wait for approval.", "Хэрэглэгч төлбөр шилжүүлж админ батлах шаардлагатай.")
+              : tr(locale, "New reservations are confirmed automatically.", "Шинэ захиалга шууд баталгаажна.")}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={togglePaymentRequired}
+          disabled={settingsSaving}
+          className={cn(
+            "h-10 rounded-xl px-4 text-sm font-semibold transition",
+            paymentRequired
+              ? "border border-amber-300/40 text-amber-100 hover:bg-amber-300/15"
+              : "border border-emerald-300/45 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-300/15",
+          )}
+        >
+          {settingsSaving
+            ? tr(locale, "Saving...", "Хадгалж байна...")
+            : paymentRequired
+              ? tr(locale, "Turn Off Payment", "Төлбөргүй болгох")
+              : tr(locale, "Require Payment", "Төлбөр шаардах")}
         </button>
       </div>
 

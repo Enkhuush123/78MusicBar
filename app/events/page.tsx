@@ -2,13 +2,23 @@ import { prisma } from "@/lib/prisma";
 import { EventCard } from "../components/eventCard";
 import { tr } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/i18n-server";
+import {
+  formatWeekRange,
+  getCurrentWeekWindow,
+  groupByWeek,
+  weekKey,
+  weekLabel,
+} from "@/lib/event-weeks";
 
 export default async function EventsPage() {
   const locale = await getServerLocale();
+  const now = new Date();
+  const { start: weekStart } = getCurrentWeekWindow(now);
   const events = await prisma.event.findMany({
-    where: { isPublished: true },
+    where: { isPublished: true, startsAt: { gte: weekStart } },
     orderBy: { startsAt: "asc" },
   });
+  const weekGroups = groupByWeek(events, now);
 
   return (
     <main className="pt-22 sm:pt-24">
@@ -40,20 +50,39 @@ export default async function EventsPage() {
             )}
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((e) => (
-              <EventCard
-                key={e.id}
-                id={e.id}
-                title={e.title}
-                imageUrl={e.imageUrl}
-                price={String(e.price)}
-                currency={e.currency}
-                venue={e.venue}
-                startsAt={e.startsAt}
-                description={e.description}
-              />
-            ))}
+          <div className="space-y-8">
+            {weekGroups.map((group) => {
+              return (
+                <section key={weekKey(group.start)}>
+                  <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <p className="ger-kicker">
+                        {weekLabel(locale, group.start, group.currentStart)}
+                      </p>
+                      <h2 className="jazz-heading text-3xl text-[#2f2116] sm:text-4xl">
+                        {formatWeekRange(group.start)}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {group.items.map((e) => (
+                      <EventCard
+                        key={e.id}
+                        id={e.id}
+                        title={e.title}
+                        imageUrl={e.imageUrl}
+                        price={String(e.price)}
+                        currency={e.currency}
+                        venue={e.venue}
+                        startsAt={e.startsAt}
+                        description={e.description}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
       </section>

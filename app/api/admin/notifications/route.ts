@@ -9,12 +9,14 @@ export async function GET() {
       where: { status: "pending_payment" },
     }),
     prisma.reservation.findFirst({
-      where: { status: "pending_payment" },
+      where: { status: { notIn: ["cancelled", "rejected"] } },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
         tableNo: true,
         guests: true,
+        reservedFor: true,
+        status: true,
         createdAt: true,
         event: { select: { title: true } },
       },
@@ -28,6 +30,8 @@ export async function GET() {
           id: latest.id,
           tableNo: latest.tableNo,
           guests: latest.guests,
+          reservedFor: latest.reservedFor.toISOString(),
+          status: latest.status,
           createdAt: latest.createdAt.toISOString(),
           eventTitle: latest.event?.title ?? null,
         }

@@ -4,6 +4,7 @@ import { getSupabaseUserFromRequest } from "@/lib/auth";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getReservationSurcharge } from "@/lib/reservation-pricing";
+import { getReservationSettings } from "@/lib/reservation-settings";
 
 function isSameLocalDay(a: Date, b: Date) {
   return (
@@ -174,6 +175,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    const settings = await getReservationSettings();
     const activeReservations = await prisma.reservation.count({
       where: {
         eventId,
@@ -194,7 +196,7 @@ export async function POST(req: Request) {
         reservedFor,
         surchargeAmount,
         note: note || null,
-        status: "pending_payment",
+        status: settings.paymentRequired ? "pending_payment" : "confirmed",
 
         userId: user?.id ?? null,
         userEmail: user?.email ?? null,
@@ -210,7 +212,8 @@ export async function POST(req: Request) {
       {
         reservation,
         payment: {
-          status: "pending_payment",
+          required: settings.paymentRequired,
+          status: reservation.status,
           reference: paymentRef,
           surchargeAmount,
           totalAmount: event.price * guests + surchargeAmount,

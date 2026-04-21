@@ -15,6 +15,7 @@ import {
   HOME_INSTAGRAM_POSTS_SLUG,
   parseHomeInstagramPosts,
 } from "@/lib/home-instagram-posts";
+import { getCurrentWeekWindow } from "@/lib/event-weeks";
 
 const FIXED_TYPES = [
   { key: "dj", nameEn: "DJ", nameMn: "DJ" },
@@ -76,6 +77,7 @@ async function safeDb<T>(
 export default async function HomePage() {
   const locale = await getServerLocale();
   const now = new Date();
+  const { start: weekStart, end: weekEnd } = getCurrentWeekWindow(now);
 
   const hero = await safeDb(
     "homeHero.findFirst",
@@ -118,7 +120,7 @@ export default async function HomePage() {
       prisma.homeFeaturedEvent.findMany({
         where: {
           isActive: true,
-          event: { isPublished: true, startsAt: { gte: now } },
+          event: { isPublished: true, startsAt: { gte: now, lt: weekEnd } },
         },
         orderBy: [{ sort: "asc" }, { updatedAt: "desc" }],
         include: { event: true },
@@ -133,28 +135,13 @@ export default async function HomePage() {
     .map((x) => x.event)
     .slice(0, 6);
 
-  const featured =
-    manualSpecial ??
-    (await safeDb(
-      "event.findFirst(featured)",
-      () =>
-        prisma.event.findFirst({
-          where: { isPublished: true, isFeatured: true, startsAt: { gte: now } },
-          orderBy: { startsAt: "asc" },
-        }),
-      null,
-    )) ??
-    (await safeDb(
-      "event.findFirst(upcomingFallback)",
-      () =>
-        prisma.event.findFirst({
-          where: { isPublished: true, startsAt: { gte: now } },
-          orderBy: { startsAt: "asc" },
-        }),
-      null,
-    ));
+  const featured = manualSpecial ?? null;
 
   const selectedUpcoming = manualUpcoming.filter((x) => x.id !== featured?.id);
+  const excludedUpcomingIds = [
+    ...(featured ? [featured.id] : []),
+    ...selectedUpcoming.map((e) => e.id),
+  ];
 
   const upcoming = await safeDb(
     "event.findMany(upcoming)",
@@ -162,10 +149,9 @@ export default async function HomePage() {
       prisma.event.findMany({
         where: {
           isPublished: true,
-          startsAt: { gte: now },
-          ...(featured ? { NOT: { id: featured.id } } : {}),
-          ...(selectedUpcoming.length
-            ? { NOT: { id: { in: selectedUpcoming.map((e) => e.id) } } }
+          startsAt: { gte: now, lt: weekEnd },
+          ...(excludedUpcomingIds.length
+            ? { NOT: { id: { in: excludedUpcomingIds } } }
             : {}),
         },
         orderBy: { startsAt: "asc" },
@@ -255,7 +241,10 @@ export default async function HomePage() {
         "openDeckReservation.findMany",
         () =>
           openDeckDelegate.findMany({
-            where: { status: "approved" },
+            where: {
+              status: "approved",
+              slot: { startsAt: { gte: weekStart, lt: weekEnd } },
+            },
             orderBy: [{ slot: { startsAt: "asc" } }, { approvedAt: "desc" }],
             take: 12,
             select: {
@@ -275,7 +264,6 @@ export default async function HomePage() {
         [],
       )
     : [];
-
   const categoryByType = new Map<
     "dj" | "artist" | "band",
     (typeof categories)[number]
@@ -413,21 +401,21 @@ export default async function HomePage() {
                 <p className="mt-3 text-amber-50/70">
                   {tr(
                     locale,
-                    "No upcoming featured event yet.",
-                    "Одоогоор онцлох эвент алга.",
+                    "No featured event this week.",
+                    "Энэ 7 хоногт онцлох эвент алга.",
                   )}
                 </p>
               )}
             </div>
 
             <div className="ger-surface min-w-0 rounded-3xl px-3 py-4 sm:px-4 sm:py-6">
-              <div className="mb-5 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div className="mb-5 flex flex-col items-start gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p className="ger-kicker">
-                    {tr(locale, "Upcoming", "Удахгүй")}
+                    {tr(locale, "Week Calendar", "7 хоногийн хуваарь")}
                   </p>
                   <h2 className="jazz-heading text-[1.9rem] text-[#2f2116] sm:text-4xl">
-                    {tr(locale, "Live Schedule", "Хуваарь")}
+                    {tr(locale, "This Week", "Энэ 7 хоног")}
                   </h2>
                 </div>
                 <Link

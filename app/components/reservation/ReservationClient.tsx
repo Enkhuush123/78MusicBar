@@ -25,6 +25,7 @@ type Props = {
   eventDescription?: string | null;
   eventImageUrl?: string | null;
   venue?: string | null;
+  paymentRequired?: boolean;
 };
 
 type Zone = "left" | "center" | "rightEntrance" | "rightCorner";
@@ -172,6 +173,7 @@ export default function ReservationClient({
   eventDescription,
   eventImageUrl,
   venue,
+  paymentRequired = true,
 }: Props) {
   const { locale } = useLocale();
   const [selected, setSelected] = useState<string | null>(null);
@@ -330,14 +332,20 @@ export default function ReservationClient({
         const reservationId = String(data?.reservation?.id ?? "");
 
         setMsg(
-          tr(
-            locale,
-            "Reservation request sent. Complete bank transfer and wait for admin approval.",
-            "Захиалгын хүсэлт илгээгдлээ. Дансаар төлбөрөө хийж админы баталгаажуулалтыг хүлээнэ үү.",
-          ),
+          paymentRequired
+            ? tr(
+                locale,
+                "Reservation request sent. Complete bank transfer and wait for admin approval.",
+                "Захиалгын хүсэлт илгээгдлээ. Дансаар төлбөрөө хийж админы баталгаажуулалтыг хүлээнэ үү.",
+              )
+            : tr(
+                locale,
+                "Reservation confirmed.",
+                "Захиалга баталгаажлаа.",
+              ),
         );
 
-        if (reservationId) {
+        if (reservationId && paymentRequired) {
           const tableNo = Number(current?.label ?? 0);
           const reference = String(
             data?.payment?.reference ??
@@ -720,11 +728,17 @@ export default function ReservationClient({
               {tr(locale, "Reservation Policy", "Захиалгын нөхцөл")}
             </p>
             <p className="mt-1">
-              {tr(
-                locale,
-                "If you are more than 30 minutes late, your reservation is cancelled and payment is non-refundable.",
-                "30 минутаас дээш хоцорвол захиалга автоматаар цуцлагдаж, төлбөр буцаан олгогдохгүй.",
-              )}
+              {paymentRequired
+                ? tr(
+                    locale,
+                    "If you are more than 30 minutes late, your reservation is cancelled and payment is non-refundable.",
+                    "30 минутаас дээш хоцорвол захиалга автоматаар цуцлагдаж, төлбөр буцаан олгогдохгүй.",
+                  )
+                : tr(
+                    locale,
+                    "If you are more than 30 minutes late, your reservation may be cancelled.",
+                    "30 минутаас дээш хоцорвол захиалга цуцлагдаж болзошгүй.",
+                  )}
             </p>
             <p className="mt-2">
               {tr(
@@ -748,11 +762,13 @@ export default function ReservationClient({
           >
             {loading
               ? tr(locale, "Submitting...", "Илгээж байна...")
-              : tr(
-                  locale,
-                  "Reserve & Proceed to Payment",
-                  "Захиалах ба төлбөр рүү үргэлжлүүлэх",
-                )}
+              : paymentRequired
+                ? tr(
+                    locale,
+                    "Reserve & Proceed to Payment",
+                    "Захиалах ба төлбөр рүү үргэлжлүүлэх",
+                  )
+                : tr(locale, "Reserve Table", "Ширээ захиалах")}
           </button>
 
           <button

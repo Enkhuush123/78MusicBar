@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import ReservationClient from "@/app/components/reservation/ReservationClient";
+import { getReservationSettings } from "@/lib/reservation-settings";
 
 export default async function Page({
   params,
@@ -40,6 +41,8 @@ export default async function Page({
     );
   }
 
+  const settings = await getReservationSettings();
+
   return (
     <ReservationClient
       eventId={e.id}
@@ -51,6 +54,7 @@ export default async function Page({
       eventDescription={e.description ?? null}
       eventImageUrl={e.imageUrl ?? null}
       venue={e.venue ?? null}
+      paymentRequired={settings.paymentRequired}
     />
   );
 }
