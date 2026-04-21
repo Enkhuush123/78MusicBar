@@ -30,7 +30,15 @@ type Row = {
   } | null;
 };
 
-const cn = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
+type EventOption = {
+  id: string;
+  title: string;
+  startsAt: string;
+  isPublished: boolean;
+};
+
+const cn = (...s: (string | false | undefined)[]) =>
+  s.filter(Boolean).join(" ");
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
@@ -40,6 +48,8 @@ function fmt(dt: string) {
   if (Number.isNaN(d.getTime())) return dt;
   return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+const TABLES = Array.from({ length: 22 }, (_, i) => i + 1);
 
 export default function AdminReservationsPage() {
   const { locale } = useLocale();
@@ -54,6 +64,11 @@ export default function AdminReservationsPage() {
   const [to, setTo] = useState("");
   const [paymentRequired, setPaymentRequired] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [events, setEvents] = useState<EventOption[]>([]);
+  const [manualEventId, setManualEventId] = useState("");
+  const [manualTableNo, setManualTableNo] = useState<number | null>(null);
+  const [manualReserved, setManualReserved] = useState<number[]>([]);
+  const [manualSaving, setManualSaving] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     mode: "cancel" | "delete";
@@ -106,15 +121,100 @@ export default function AdminReservationsPage() {
     setPaymentRequired(data.paymentRequired !== false);
   };
 
+  const loadEvents = async () => {
+    const res = await fetch("/api/admin/events", { cache: "no-store" }).catch(
+      () => null,
+    );
+    if (!res?.ok) return;
+    const data = (await res.json()) as { events?: EventOption[] };
+    const rows = (data.events ?? []).filter((event) => event.isPublished);
+    setEvents(rows);
+    setManualEventId((prev) => prev || rows[0]?.id || "");
+  };
+
+  const loadManualReserved = async () => {
+    const event = events.find((row) => row.id === manualEventId);
+    if (!event) {
+      setManualReserved([]);
+      return;
+    }
+    const reservedFor = new Date(event.startsAt).toISOString();
+    const res = await fetch(
+      `/api/reservations?eventId=${encodeURIComponent(manualEventId)}&reservedFor=${encodeURIComponent(reservedFor)}`,
+      { cache: "no-store" },
+    ).catch(() => null);
+    if (!res?.ok) {
+      setManualReserved([]);
+      return;
+    }
+    const data = (await res.json()) as { reserved?: number[] };
+    setManualReserved(Array.isArray(data.reserved) ? data.reserved : []);
+  };
+
   useEffect(() => {
     load();
     loadSettings();
+    loadEvents();
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") load();
     }, 5000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    void loadManualReserved();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualEventId, events]);
+
+  const selectedManualEvent = useMemo(
+    () => events.find((event) => event.id === manualEventId) ?? null,
+    [events, manualEventId],
+  );
+
+  const createManualReservation = async () => {
+    if (!selectedManualEvent || !manualTableNo) {
+      setMsg(
+        tr(locale, "Choose event and table.", "Эвент болон ширээг сонгоно уу."),
+      );
+      return;
+    }
+    setManualSaving(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: manualEventId,
+          reservedFor: new Date(selectedManualEvent.startsAt).toISOString(),
+          tableNo: manualTableNo,
+          guests: 2,
+          adminHold: true,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMsg(
+          data?.message ||
+            tr(locale, "Table hold failed.", "Ширээ хадгалахад алдаа гарлаа."),
+        );
+        return;
+      }
+      setMsg(
+        tr(
+          locale,
+          `Table #${manualTableNo} is now reserved on the website.`,
+          `Ширээ #${manualTableNo} website дээр reserved боллоо.`,
+        ),
+      );
+      setManualTableNo(null);
+      await loadManualReserved();
+      await load();
+    } finally {
+      setManualSaving(false);
+    }
+  };
 
   const togglePaymentRequired = async () => {
     const next = !paymentRequired;
@@ -127,14 +227,28 @@ export default function AdminReservationsPage() {
         body: JSON.stringify({ paymentRequired: next }),
       });
       if (!res.ok) {
-        setMsg(tr(locale, "Payment setting update failed", "Төлбөрийн тохиргоо хадгалагдсангүй"));
+        setMsg(
+          tr(
+            locale,
+            "Payment setting update failed",
+            "Төлбөрийн тохиргоо хадгалагдсангүй",
+          ),
+        );
         return;
       }
       setPaymentRequired(next);
       setMsg(
         next
-          ? tr(locale, "Payment is now required for new reservations.", "Шинэ захиалгад төлбөр шаардана.")
-          : tr(locale, "New reservations will now be confirmed automatically.", "Шинэ захиалга шууд баталгааждаг боллоо."),
+          ? tr(
+              locale,
+              "Payment is now required for new reservations.",
+              "Шинэ захиалгад төлбөр шаардана.",
+            )
+          : tr(
+              locale,
+              "New reservations will now be confirmed automatically.",
+              "Шинэ захиалга шууд баталгааждаг боллоо.",
+            ),
       );
     } finally {
       setSettingsSaving(false);
@@ -186,10 +300,14 @@ export default function AdminReservationsPage() {
   };
 
   const remove = async (id: string) => {
-    const res = await fetch(`/api/admin/reservations/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/reservations/${id}`, {
+      method: "DELETE",
+    });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      return setMsg(d?.message || tr(locale, "Delete failed", "Устгахад алдаа гарлаа"));
+      return setMsg(
+        d?.message || tr(locale, "Delete failed", "Устгахад алдаа гарлаа"),
+      );
     }
     await load();
   };
@@ -272,7 +390,11 @@ export default function AdminReservationsPage() {
             )}
           </p>
           <p className="mt-1 text-xs text-amber-100/80">
-            {tr(locale, "Realtime updates every 5 seconds", "5 секунд тутам realtime шинэчлэгдэнэ")}
+            {tr(
+              locale,
+              "Realtime updates every 5 seconds",
+              "5 секунд тутам realtime шинэчлэгдэнэ",
+            )}
           </p>
         </div>
 
@@ -286,14 +408,102 @@ export default function AdminReservationsPage() {
             label={tr(locale, "Confirmed", "Баталгаажсан")}
             value={counts.confirmed}
           />
-          <Stat label={tr(locale, "Cancelled", "Цуцалсан")} value={counts.cancelled} />
+          <Stat
+            label={tr(locale, "Cancelled", "Цуцалсан")}
+            value={counts.cancelled}
+          />
+        </div>
+      </div>
+
+      <div className="reservation-soft mt-6 rounded-2xl p-4">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-amber-50">
+              {tr(locale, "Floor Control", "Ширээ хянах")}
+            </p>
+          </div>
+          {selectedManualEvent ? (
+            <p className="text-xs text-amber-100/70">
+              {tr(locale, "Selected", "Сонгосон")}: {selectedManualEvent.title}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_150px]">
+          <select
+            className="h-11 rounded-xl px-3 text-amber-50"
+            value={manualEventId}
+            onChange={(e) => {
+              const nextId = e.target.value;
+              setManualEventId(nextId);
+              setManualTableNo(null);
+            }}
+          >
+            {events.length === 0 ? (
+              <option value="">
+                {tr(locale, "No published events", "Нийтлэгдсэн эвент алга")}
+              </option>
+            ) : null}
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title} • {fmt(event.startsAt)}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={createManualReservation}
+            disabled={manualSaving || !manualTableNo}
+            className={cn(
+              "h-11 rounded-xl font-semibold transition",
+              manualSaving || !manualTableNo
+                ? "bg-neutral-200 text-neutral-500"
+                : "ger-btn-primary",
+            )}
+          >
+            {manualSaving
+              ? tr(locale, "Saving...", "Хадгалж байна...")
+              : tr(locale, "Mark Reserved", "Reserved болгох")}
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-11">
+          {TABLES.map((tableNo) => {
+            const isReserved = manualReserved.includes(tableNo);
+            const isSelected = manualTableNo === tableNo;
+            return (
+              <button
+                key={tableNo}
+                type="button"
+                disabled={isReserved}
+                onClick={() => setManualTableNo(tableNo)}
+                className={cn(
+                  "h-12 rounded-xl border text-sm font-semibold transition",
+                  isReserved &&
+                    "cursor-not-allowed border-neutral-500/40 bg-neutral-900/45 text-neutral-400",
+                  !isReserved &&
+                    !isSelected &&
+                    "border-amber-300/30 bg-black/20 text-amber-100 hover:bg-amber-300/15",
+                  isSelected &&
+                    "border-amber-200 bg-amber-300 text-neutral-950",
+                )}
+              >
+                #{tableNo}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="reservation-soft mt-6 grid gap-3 rounded-2xl p-4 md:grid-cols-[1fr_160px_170px_170px_140px]">
         <input
           className="h-11 w-full rounded-xl px-3 text-amber-50"
-          placeholder={tr(locale, "Search name / phone / email", "Нэр / утас / email хайх")}
+          placeholder={tr(
+            locale,
+            "Search name / phone / email",
+            "Нэр / утас / email хайх",
+          )}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -304,10 +514,18 @@ export default function AdminReservationsPage() {
           onChange={(e) => setStatus(e.target.value as any)}
         >
           <option value="all">{tr(locale, "All", "Бүгд")}</option>
-          <option value="pending_payment">{tr(locale, "Pending payment", "Төлбөр хүлээгдэж буй")}</option>
-          <option value="confirmed">{tr(locale, "Confirmed", "Баталгаажсан")}</option>
-          <option value="cancelled">{tr(locale, "Cancelled", "Цуцалсан")}</option>
-          <option value="rejected">{tr(locale, "Rejected", "Татгалзсан")}</option>
+          <option value="pending_payment">
+            {tr(locale, "Pending payment", "Төлбөр хүлээгдэж буй")}
+          </option>
+          <option value="confirmed">
+            {tr(locale, "Confirmed", "Баталгаажсан")}
+          </option>
+          <option value="cancelled">
+            {tr(locale, "Cancelled", "Цуцалсан")}
+          </option>
+          <option value="rejected">
+            {tr(locale, "Rejected", "Татгалзсан")}
+          </option>
         </select>
 
         <input
@@ -327,9 +545,7 @@ export default function AdminReservationsPage() {
           onClick={load}
           className={cn(
             "h-11 rounded-xl font-semibold transition",
-            loading
-              ? "bg-neutral-200 text-neutral-500"
-              : "ger-btn-primary",
+            loading ? "bg-neutral-200 text-neutral-500" : "ger-btn-primary",
           )}
           disabled={loading}
         >
@@ -344,8 +560,16 @@ export default function AdminReservationsPage() {
           </p>
           <p className="text-xs text-amber-100/80">
             {paymentRequired
-              ? tr(locale, "Customers must transfer payment and wait for approval.", "Хэрэглэгч төлбөр шилжүүлж админ батлах шаардлагатай.")
-              : tr(locale, "New reservations are confirmed automatically.", "Шинэ захиалга шууд баталгаажна.")}
+              ? tr(
+                  locale,
+                  "Customers must transfer payment and wait for approval.",
+                  "Хэрэглэгч төлбөр шилжүүлж админ батлах шаардлагатай.",
+                )
+              : tr(
+                  locale,
+                  "New reservations are confirmed automatically.",
+                  "Шинэ захиалга шууд баталгаажна.",
+                )}
           </p>
         </div>
         <button
@@ -390,7 +614,11 @@ export default function AdminReservationsPage() {
                     {r.status === "cancelled"
                       ? tr(locale, " • (cancelled)", " • (цуцалсан)")
                       : r.status === "pending_payment"
-                        ? tr(locale, " • (pending payment)", " • (төлбөр хүлээгдэж буй)")
+                        ? tr(
+                            locale,
+                            " • (pending payment)",
+                            " • (төлбөр хүлээгдэж буй)",
+                          )
                         : r.status === "confirmed"
                           ? tr(locale, " • (confirmed)", " • (баталгаажсан)")
                           : r.status === "rejected"
@@ -398,10 +626,12 @@ export default function AdminReservationsPage() {
                             : ""}
                   </p>
                   <p className="text-xs text-amber-100/90">
-                    {fmt(r.reservedFor)} • {tr(locale, "Table", "Ширээ")} #{r.tableNo} • {r.guests} {tr(locale, "people", "хүн")}
+                    {fmt(r.reservedFor)} • {tr(locale, "Table", "Ширээ")} #
+                    {r.tableNo} • {r.guests} {tr(locale, "people", "хүн")}
                   </p>
                   <p className="truncate text-xs text-amber-100/90">
-                    {r.name || r.userEmail || "—"} • {r.phone || r.userPhone || "—"}
+                    {r.name || r.userEmail || "—"} •{" "}
+                    {r.phone || r.userPhone || "—"}
                   </p>
                   <p className="mt-1 text-xs text-amber-100/90">
                     {tr(locale, "Payment ref", "Төлбөрийн код")}:{" "}
@@ -410,21 +640,27 @@ export default function AdminReservationsPage() {
                     </span>{" "}
                     • {tr(locale, "Expected", "Хүлээгдэх дүн")}:{" "}
                     <span className="font-semibold text-amber-200">
-                      {((r.event?.price || 0) * r.guests + (r.surchargeAmount || 0)).toLocaleString()} {r.event?.currency || "MNT"}
+                      {(
+                        (r.event?.price || 0) * r.guests +
+                        (r.surchargeAmount || 0)
+                      ).toLocaleString()}{" "}
+                      {r.event?.currency || "MNT"}
                     </span>
                   </p>
                   {r.surchargeAmount > 0 ? (
                     <p className="mt-1 text-xs text-amber-100/80">
                       {tr(locale, "Surcharge", "Нэмэгдэл")}:{" "}
                       <span className="font-semibold text-amber-200">
-                        +{r.surchargeAmount.toLocaleString()} {r.event?.currency || "MNT"}
+                        +{r.surchargeAmount.toLocaleString()}{" "}
+                        {r.event?.currency || "MNT"}
                       </span>
                     </p>
                   ) : null}
                   <p className="mt-1 text-xs text-amber-100/80">
                     {tr(locale, "Booked", "Үүсгэсэн")}: {fmt(r.createdAt)} •{" "}
                     {tr(locale, "Updated", "Шинэчилсэн")}: {fmt(r.updatedAt)} •{" "}
-                    {tr(locale, "Venue", "Байршил")}: {r.event?.venue || "78MusicBar"}
+                    {tr(locale, "Venue", "Байршил")}:{" "}
+                    {r.event?.venue || "78MusicBar"}
                   </p>
                   {r.note ? (
                     <p className="mt-2 rounded-lg border border-amber-300/20 bg-black/30 px-2 py-1 text-xs text-amber-100/80">
@@ -482,8 +718,12 @@ export default function AdminReservationsPage() {
       {confirmDialog.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
           <div className="w-full max-w-md rounded-2xl border border-amber-300/35 bg-[linear-gradient(165deg,rgba(35,26,20,0.98)_0%,rgba(26,20,15,0.98)_100%)] p-6 shadow-2xl">
-            <p className="jazz-heading text-2xl text-amber-100">{confirmDialog.title}</p>
-            <p className="mt-3 text-sm text-amber-100/85">{confirmDialog.body}</p>
+            <p className="jazz-heading text-2xl text-amber-100">
+              {confirmDialog.title}
+            </p>
+            <p className="mt-3 text-sm text-amber-100/85">
+              {confirmDialog.body}
+            </p>
             <div className="mt-6 flex gap-2">
               <button
                 type="button"

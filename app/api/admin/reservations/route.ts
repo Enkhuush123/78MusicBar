@@ -88,6 +88,7 @@ export async function POST(req: Request) {
   const guests = Number(body?.guests ?? 2);
   const tableNo = Number(body?.tableNo);
   const note = body?.note ? String(body.note).trim() : null;
+  const adminHold = Boolean(body?.adminHold);
 
   if (!eventId)
     return Response.json({ message: "eventId required" }, { status: 400 });
@@ -123,7 +124,7 @@ export async function POST(req: Request) {
   const name = String(body?.name ?? "").trim();
   const phone = String(body?.phone ?? "").trim();
 
-  if (!user && (!name || !phone)) {
+  if (!user && !adminHold && (!name || !phone)) {
     return Response.json(
       { message: "name/phone required for guests" },
       { status: 400 },
@@ -150,15 +151,15 @@ export async function POST(req: Request) {
         tableNo,
         reservedFor,
         surchargeAmount,
-        note: note || null,
+        note: adminHold ? null : note || null,
         status: "confirmed",
 
         userId: user?.id ?? null,
         userEmail: user?.email ?? null,
         userPhone: (user as any)?.phone ?? null,
 
-        name: user ? null : name,
-        phone: user ? null : phone,
+        name: user || adminHold ? null : name,
+        phone: user || adminHold ? null : phone,
       },
     });
 
