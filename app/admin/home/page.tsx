@@ -197,7 +197,6 @@ export default function AdminHomePage() {
   const [featured, setFeatured] = useState<FeaturedRow[]>([]);
 
   const [specialPick, setSpecialPick] = useState("");
-  const [upcomingPick, setUpcomingPick] = useState("");
 
   const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -237,7 +236,6 @@ export default function AdminHomePage() {
     setFeatured(f);
     setEvents(ev);
     setSpecialPick((prev) => prev || ev?.[0]?.id || "");
-    setUpcomingPick((prev) => prev || ev?.[0]?.id || "");
   };
 
   useEffect(() => {
@@ -246,11 +244,6 @@ export default function AdminHomePage() {
 
   const special = useMemo(
     () => featured.find((f) => f.sort === 0) ?? null,
-    [featured],
-  );
-
-  const upcomingRows = useMemo(
-    () => featured.filter((f) => f.sort > 0).sort((a, b) => a.sort - b.sort),
     [featured],
   );
 
@@ -499,9 +492,7 @@ export default function AdminHomePage() {
     try {
       if (special && special.eventId !== specialPick) {
         await fetch(`/api/admin/home/featured/${special.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sort: 1 }),
+          method: "DELETE",
         });
       }
 
@@ -518,59 +509,6 @@ export default function AdminHomePage() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const addUpcomingEvent = async () => {
-    if (!upcomingPick) return;
-    const used = featured.some((f) => f.eventId === upcomingPick);
-    if (used)
-      return setMsg(
-        tr(
-          locale,
-          "This event is already selected.",
-          "Энэ эвент аль хэдийн сонгогдсон байна.",
-        ),
-      );
-
-    setSaving(true);
-    setMsg(null);
-    try {
-      const nextSort = Math.max(1, ...upcomingRows.map((x) => x.sort)) + 1;
-      await fetch("/api/admin/home/featured", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId: upcomingPick, sort: nextSort }),
-      });
-      setMsg(
-        tr(locale, "✅ Upcoming event added", "✅ Удахгүй эвент нэмэгдлээ"),
-      );
-      await load();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const moveUpcoming = async (id: string, dir: "up" | "down") => {
-    const index = upcomingRows.findIndex((x) => x.id === id);
-    if (index === -1) return;
-    const swapWith = dir === "up" ? index - 1 : index + 1;
-    if (swapWith < 0 || swapWith >= upcomingRows.length) return;
-
-    const a = upcomingRows[index];
-    const b = upcomingRows[swapWith];
-    await Promise.all([
-      fetch(`/api/admin/home/featured/${a.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sort: b.sort }),
-      }),
-      fetch(`/api/admin/home/featured/${b.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sort: a.sort }),
-      }),
-    ]);
-    await load();
   };
 
   const askRemoveFeatured = (id: string) => {
@@ -676,73 +614,6 @@ export default function AdminHomePage() {
                 )}
               </p>
             )}
-          </div>
-
-          <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">
-            <p className="text-sm font-semibold text-amber-100">
-              {tr(locale, "Upcoming Events", "Удахгүй эвентүүд")}
-            </p>
-            <div className="mt-3 grid gap-2 md:grid-cols-[1fr_140px]">
-              <select
-                className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
-                value={upcomingPick}
-                onChange={(e) => setUpcomingPick(e.target.value)}
-              >
-                {events.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.title}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={addUpcomingEvent}
-                className="h-11 rounded-xl bg-amber-300 font-semibold text-neutral-900 hover:bg-amber-200"
-              >
-                {tr(locale, "Add", "Нэмэх")}
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-2">
-              {upcomingRows.map((r, i) => (
-                <div
-                  key={r.id}
-                  className="flex items-center justify-between rounded-xl border border-amber-300/20 bg-black/30 px-3 py-2"
-                >
-                  <p className="text-sm text-amber-50">
-                    {i + 1}. {r.event.title}
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => moveUpcoming(r.id, "up")}
-                      className="rounded-lg border border-amber-300/40 px-2 py-1 text-xs text-amber-50"
-                    >
-                      {tr(locale, "Up", "Дээш")}
-                    </button>
-                    <button
-                      onClick={() => moveUpcoming(r.id, "down")}
-                      className="rounded-lg border border-amber-300/40 px-2 py-1 text-xs text-amber-50"
-                    >
-                      {tr(locale, "Down", "Доош")}
-                    </button>
-                    <button
-                      onClick={() => askRemoveFeatured(r.id)}
-                      className="rounded-lg border border-amber-300/40 px-2 py-1 text-xs text-amber-50"
-                    >
-                      {tr(locale, "Remove", "Хасах")}
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {upcomingRows.length === 0 && (
-                <p className="text-sm text-amber-100/70">
-                  {tr(
-                    locale,
-                    "No upcoming events selected.",
-                    "Удахгүй эвент сонгоогүй байна.",
-                  )}
-                </p>
-              )}
-            </div>
           </div>
 
           <div className="rounded-2xl border border-amber-300/25 bg-black/20 p-4">

@@ -12,8 +12,16 @@ export async function GET() {
 export async function PATCH(req: Request) {
   await requireAdmin();
   const body = await req.json().catch(() => null);
-  const paymentRequired = Boolean(body?.paymentRequired);
+  const current = await getReservationSettings();
+  const paymentRequired =
+    typeof body?.paymentRequired === "boolean"
+      ? body.paymentRequired
+      : current.paymentRequired;
+  const allowCustomDate =
+    typeof body?.allowCustomDate === "boolean"
+      ? body.allowCustomDate
+      : current.allowCustomDate;
 
-  await setReservationSettings({ paymentRequired });
-  return Response.json({ paymentRequired });
+  await setReservationSettings({ paymentRequired, allowCustomDate });
+  return Response.json({ paymentRequired, allowCustomDate });
 }

@@ -55,6 +55,7 @@ export default async function Page({
       eventImageUrl={e.imageUrl ?? null}
       venue={e.venue ?? null}
       paymentRequired={settings.paymentRequired}
+      allowCustomDate={false}
     />
   );
 }

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
+import { isDailyReservationEventId } from "@/lib/daily-reservation";
 
 export async function GET() {
   await requireAdmin();
@@ -18,7 +19,7 @@ export async function GET() {
         reservedFor: true,
         status: true,
         createdAt: true,
-        event: { select: { title: true } },
+        event: { select: { id: true, title: true } },
       },
     }),
   ]);
@@ -33,7 +34,10 @@ export async function GET() {
           reservedFor: latest.reservedFor.toISOString(),
           status: latest.status,
           createdAt: latest.createdAt.toISOString(),
-          eventTitle: latest.event?.title ?? null,
+          eventTitle:
+            latest.event && !isDailyReservationEventId(latest.event.id)
+              ? latest.event.title
+              : null,
         }
       : null,
   });

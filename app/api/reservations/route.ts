@@ -5,51 +5,89 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getReservationSurcharge } from "@/lib/reservation-pricing";
 import { getReservationSettings } from "@/lib/reservation-settings";
-
-function isSameLocalDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
+import { getOrCreateDailyReservationEvent } from "@/lib/daily-reservation-server";
+import {
+  isTodayReservationDay,
+  isWithinDailyReservationWindow,
+  isSameLocalDay,
+  parseDayInput,
+} from "@/lib/daily-reservation";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const eventId = searchParams.get("eventId");
+  const reservationDate = searchParams.get("reservationDate");
   const reservedForParam = searchParams.get("reservedFor");
 
-  if (!eventId) {
-    return Response.json({ message: "eventId required" }, { status: 400 });
-  }
+  let event:
+    | { id: string; isPublished: boolean; startsAt: Date }
+    | null = null;
 
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    select: { id: true, isPublished: true, startsAt: true },
-  });
+  if (eventId) {
+    event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true, isPublished: true, startsAt: true },
+    });
 
-  if (!event || !event.isPublished) {
-    return Response.json({ message: "Event not available" }, { status: 404 });
+    if (!event || !event.isPublished) {
+      return Response.json({ message: "Event not available" }, { status: 404 });
+    }
+  } else {
+    const day = parseDayInput(
+      reservationDate || String(reservedForParam || "").slice(0, 10),
+    );
+    if (!day) {
+      return Response.json(
+        { message: "eventId or reservationDate required" },
+        { status: 400 },
+      );
+    }
+    const dailyEvent = await getOrCreateDailyReservationEvent(day);
+    event = {
+      id: dailyEvent.id,
+      isPublished: true,
+      startsAt: day,
+    };
   }
 
   const reservedFor = reservedForParam
     ? new Date(reservedForParam)
     : event.startsAt;
-
   if (Number.isNaN(reservedFor.getTime())) {
     return Response.json({ message: "invalid reservedFor" }, { status: 400 });
   }
 
-  if (!isSameLocalDay(reservedFor, event.startsAt)) {
-    return Response.json(
-      { message: "Reservation must be on the same event day" },
-      { status: 400 },
-    );
+  if (eventId) {
+    if (!isSameLocalDay(reservedFor, event.startsAt)) {
+      return Response.json(
+        { message: "Reservation must be on the same event day" },
+        { status: 400 },
+      );
+    }
+  } else {
+    if (!isTodayReservationDay(event.startsAt)) {
+      return Response.json(
+        { message: "Today reservations are available only for today." },
+        { status: 400 },
+      );
+    }
+    if (!isSameLocalDay(reservedFor, event.startsAt)) {
+      return Response.json(
+        { message: "Reservation time must be on today's date." },
+        { status: 400 },
+      );
+    }
+    if (!isWithinDailyReservationWindow(reservedFor)) {
+      return Response.json(
+        { message: "Today reservations are available from 18:00 to 22:00." },
+        { status: 400 },
+      );
+    }
   }
 
   const rows = await prisma.reservation.findMany({
     where: {
-      eventId,
+      eventId: event.id,
       reservedFor,
       status: { notIn: ["cancelled", "rejected"] },
     },
@@ -63,54 +101,106 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
 
   const eventId = String(body?.eventId ?? "");
+  const reservationDate = String(body?.reservationDate ?? "").trim();
   const guests = Number(body?.guests ?? 2);
   const tableNo = Number(body?.tableNo);
   const note = body?.note ? String(body.note).trim() : null;
   const acceptedPolicy = Boolean(body?.acceptedPolicy);
 
-  if (!eventId)
-    return Response.json({ message: "eventId required" }, { status: 400 });
   if (Number.isNaN(tableNo) || tableNo < 1 || tableNo > 22)
     return Response.json({ message: "invalid tableNo" }, { status: 400 });
   if (!acceptedPolicy) {
     return Response.json(
       {
-        message:
-          "Please accept reservation policy (30-minute late arrival = cancelled, non-refundable).",
+        message: "Please accept the reservation policy.",
       },
       { status: 400 },
     );
   }
 
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    select: {
-      id: true,
-      isPublished: true,
-      startsAt: true,
-      endsAt: true,
-      price: true,
-      currency: true,
-    },
-  });
+  let event:
+    | {
+        id: string;
+        isPublished: boolean;
+        startsAt: Date;
+        endsAt: Date | null;
+        price: number;
+        currency: string;
+      }
+    | null = null;
 
-  if (!event || !event.isPublished) {
-    return Response.json({ message: "Event not available" }, { status: 404 });
+  if (eventId) {
+    event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        id: true,
+        isPublished: true,
+        startsAt: true,
+        endsAt: true,
+        price: true,
+        currency: true,
+      },
+    });
+
+    if (!event || !event.isPublished) {
+      return Response.json({ message: "Event not available" }, { status: 404 });
+    }
+  } else {
+    const day = parseDayInput(
+      reservationDate || String(body?.reservedFor || "").slice(0, 10),
+    );
+    if (!day) {
+      return Response.json(
+        { message: "eventId or reservationDate required" },
+        { status: 400 },
+      );
+    }
+    const dailyEvent = await getOrCreateDailyReservationEvent(day);
+    event = {
+      id: dailyEvent.id,
+      isPublished: true,
+      startsAt: day,
+      endsAt: dailyEvent.endsAt,
+      price: dailyEvent.price,
+      currency: dailyEvent.currency,
+    };
   }
 
   const reservedFor = body?.reservedFor
     ? new Date(body.reservedFor)
     : event.startsAt;
+  const settings = await getReservationSettings();
 
   if (Number.isNaN(reservedFor.getTime())) {
     return Response.json({ message: "invalid reservedFor" }, { status: 400 });
   }
 
-  if (!isSameLocalDay(reservedFor, event.startsAt)) {
-    return Response.json(
-      { message: "Reservation must be on the same event day" },
-      { status: 400 },
-    );
+  if (eventId) {
+    if (!isSameLocalDay(reservedFor, event.startsAt)) {
+      return Response.json(
+        { message: "Reservation must be on the same event day" },
+        { status: 400 },
+      );
+    }
+  } else {
+    if (!isTodayReservationDay(event.startsAt)) {
+      return Response.json(
+        { message: "Today reservations are available only for today." },
+        { status: 400 },
+      );
+    }
+    if (!isSameLocalDay(reservedFor, event.startsAt)) {
+      return Response.json(
+        { message: "Reservation time must be on today's date." },
+        { status: 400 },
+      );
+    }
+    if (!isWithinDailyReservationWindow(reservedFor)) {
+      return Response.json(
+        { message: "Today reservations are available from 18:00 to 22:00." },
+        { status: 400 },
+      );
+    }
   }
 
   let user = getSupabaseUserFromRequest(req);
@@ -153,7 +243,7 @@ export async function POST(req: Request) {
   if (user?.id || user?.email) {
     const existing = await prisma.reservation.findFirst({
       where: {
-        eventId,
+        eventId: event.id,
         status: { notIn: ["cancelled", "rejected"] },
         OR: [
           ...(user?.id ? [{ userId: user.id }] : []),
@@ -167,7 +257,9 @@ export async function POST(req: Request) {
       return Response.json(
         {
           message:
-            "This account already has a reservation for this event. One account can reserve only one table per event.",
+            eventId
+              ? "This account already has a reservation for this event. One account can reserve only one table per event."
+              : "This account already has a reservation for this day. One account can reserve only one table per day.",
         },
         { status: 409 },
       );
@@ -175,10 +267,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const settings = await getReservationSettings();
     const activeReservations = await prisma.reservation.count({
       where: {
-        eventId,
+        eventId: event.id,
         reservedFor,
         status: { notIn: ["cancelled", "rejected"] },
       },
@@ -190,7 +281,7 @@ export async function POST(req: Request) {
 
     const reservation = await prisma.reservation.create({
       data: {
-        eventId,
+        eventId: event.id,
         guests,
         tableNo,
         reservedFor,

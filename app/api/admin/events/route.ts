@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
+import { DAILY_RESERVATION_PREFIX } from "@/lib/daily-reservation";
 
 export async function GET() {
   await requireAdmin();
   const events = await prisma.event.findMany({
+    where: { NOT: { id: { startsWith: DAILY_RESERVATION_PREFIX } } },
     orderBy: { startsAt: "asc" },
   });
   return Response.json({ events });

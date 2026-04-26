@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
+import { isDailyReservationEventId } from "@/lib/daily-reservation";
 
 export async function GET(
   _req: Request,
@@ -11,6 +12,9 @@ export async function GET(
 
   if (!id) {
     return Response.json({ message: "id required" }, { status: 400 });
+  }
+  if (isDailyReservationEventId(id)) {
+    return Response.json({ message: "not found" }, { status: 404 });
   }
 
   const e = await prisma.event.findUnique({ where: { id } });
@@ -26,6 +30,9 @@ export async function PATCH(
   await requireAdmin();
   const { id } = await ctx.params;
   if (!id) return Response.json({ message: "id required" }, { status: 400 });
+  if (isDailyReservationEventId(id)) {
+    return Response.json({ message: "not found" }, { status: 404 });
+  }
 
   const body = await req.json().catch(() => null);
 
@@ -58,6 +65,9 @@ export async function DELETE(
   await requireAdmin();
   const { id } = await ctx.params;
   if (!id) return Response.json({ message: "id required" }, { status: 400 });
+  if (isDailyReservationEventId(id)) {
+    return Response.json({ message: "not found" }, { status: 404 });
+  }
 
   await prisma.event.delete({ where: { id } });
   return Response.json({ ok: true });

@@ -2,10 +2,12 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getServerLocale } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
+import { DAILY_RESERVATION_PREFIX } from "@/lib/daily-reservation";
 
 export default async function AdminEventsPage() {
   const locale = await getServerLocale();
   const events = await prisma.event.findMany({
+    where: { NOT: { id: { startsWith: DAILY_RESERVATION_PREFIX } } },
     orderBy: { startsAt: "asc" },
   });
 

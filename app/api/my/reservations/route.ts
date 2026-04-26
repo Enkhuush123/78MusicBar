@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getSupabaseUserFromRequest } from "@/lib/auth";
+import { publicReservationTitle } from "@/lib/daily-reservation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -70,9 +71,20 @@ export async function GET(req: Request) {
     },
   });
 
-  return Response.json(rows, {
-    headers: {
-      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+  return Response.json(
+    rows.map((row) => ({
+      ...row,
+      event: row.event
+        ? {
+            ...row.event,
+            title: publicReservationTitle(row.event) ?? row.event.title,
+          }
+        : null,
+    })),
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+      },
     },
-  });
+  );
 }

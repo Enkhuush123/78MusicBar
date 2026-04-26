@@ -16,6 +16,7 @@ import {
   parseHomeInstagramPosts,
 } from "@/lib/home-instagram-posts";
 import { getCurrentWeekWindow } from "@/lib/event-weeks";
+import { getReservationSettings } from "@/lib/reservation-settings";
 
 const FIXED_TYPES = [
   { key: "dj", nameEn: "DJ", nameMn: "DJ" },
@@ -77,7 +78,14 @@ async function safeDb<T>(
 export default async function HomePage() {
   const locale = await getServerLocale();
   const now = new Date();
+  const nextSevenDays = new Date(now);
+  nextSevenDays.setDate(nextSevenDays.getDate() + 7);
   const { start: weekStart, end: weekEnd } = getCurrentWeekWindow(now);
+  const reservationSettings = await safeDb(
+    "reservationSettings",
+    () => getReservationSettings(),
+    { paymentRequired: true, allowCustomDate: false },
+  );
 
   const hero = await safeDb(
     "homeHero.findFirst",
@@ -120,7 +128,10 @@ export default async function HomePage() {
       prisma.homeFeaturedEvent.findMany({
         where: {
           isActive: true,
-          event: { isPublished: true, startsAt: { gte: now, lt: weekEnd } },
+          event: {
+            isPublished: true,
+            startsAt: { gte: now, lt: nextSevenDays },
+          },
         },
         orderBy: [{ sort: "asc" }, { updatedAt: "desc" }],
         include: { event: true },
@@ -130,29 +141,15 @@ export default async function HomePage() {
   );
 
   const manualSpecial = manualFeatured.find((x) => x.sort === 0)?.event;
-  const manualUpcoming = manualFeatured
-    .filter((x) => x.sort > 0)
-    .map((x) => x.event)
-    .slice(0, 6);
-
   const featured = manualSpecial ?? null;
 
-  const selectedUpcoming = manualUpcoming.filter((x) => x.id !== featured?.id);
-  const excludedUpcomingIds = [
-    ...(featured ? [featured.id] : []),
-    ...selectedUpcoming.map((e) => e.id),
-  ];
-
-  const upcoming = await safeDb(
-    "event.findMany(upcoming)",
+  const weekEvents = await safeDb(
+    "event.findMany(weekEvents)",
     () =>
       prisma.event.findMany({
         where: {
           isPublished: true,
-          startsAt: { gte: now, lt: weekEnd },
-          ...(excludedUpcomingIds.length
-            ? { NOT: { id: { in: excludedUpcomingIds } } }
-            : {}),
+          startsAt: { gte: now, lt: nextSevenDays },
         },
         orderBy: { startsAt: "asc" },
         take: 6,
@@ -264,6 +261,7 @@ export default async function HomePage() {
         [],
       )
     : [];
+
   const categoryByType = new Map<
     "dj" | "artist" | "band",
     (typeof categories)[number]
@@ -427,19 +425,67 @@ export default async function HomePage() {
               </div>
               <UpcomingRow
                 locale={locale}
-                events={[...selectedUpcoming, ...upcoming]
-                  .slice(0, 6)
-                  .map((e) => ({
-                    id: e.id,
-                    title: e.title,
-                    imageUrl: e.imageUrl ?? null,
-                    price: e.price,
-                    currency: e.currency,
-                    venue: e.venue,
-                    startsAt: e.startsAt.toISOString(),
-                  }))}
+                events={weekEvents.map((e) => ({
+                  id: e.id,
+                  title: e.title,
+                  imageUrl: e.imageUrl ?? null,
+                  price: e.price,
+                  currency: e.currency,
+                  venue: e.venue,
+                  startsAt: e.startsAt.toISOString(),
+                }))}
               />
             </div>
+
+            {reservationSettings.allowCustomDate ? (
+              <div className="ger-surface min-w-0 overflow-hidden rounded-3xl border border-[#d7bc93] p-0">
+                <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+                  <div>
+                    <div className="px-4 py-5 sm:px-6 sm:py-6">
+                      <p className="ger-kicker">
+                        {tr(locale, "Today", "Өнөөдөр")}
+                      </p>
+                      <h2 className="jazz-heading text-[1.9rem] text-[#2f2116] sm:text-4xl">
+                        {tr(locale, "Reserve Table Today", "Өнөөдөр ширээ захиалах")}
+                      </h2>
+                      <p className="mt-2 max-w-2xl text-sm text-[#5a412d] sm:text-base">
+                        {tr(
+                          locale,
+                          "Open today-only reservations between 18:00 and 22:00.",
+                          "Өнөөдрийн 18:00-22:00 цагийн хооронд ширээгээ шууд захиалаарай.",
+                        )}
+                      </p>
+                      <Link
+                        href="/reserve"
+                        className="ger-btn-primary mt-4 inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold"
+                      >
+                        {tr(locale, "Reserve Table Today", "Өнөөдөр ширээ захиалах")}
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="relative min-h-[220px] bg-[radial-gradient(circle_at_top,rgba(255,246,226,0.95),rgba(244,233,216,0.82)_38%,rgba(215,188,147,0.42)_100%)]">
+                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.38)_0%,rgba(255,255,255,0)_45%)]" />
+                    <div className="relative flex h-full min-h-[220px] flex-col items-center justify-center gap-3 px-6 py-8 text-center">
+                      <img
+                        src="/78MusicBar.png"
+                        alt="78MusicBar"
+                        className="h-20 w-auto object-contain sm:h-24"
+                      />
+                      <p className="text-xs uppercase tracking-[0.28em] text-[#7a573b]">
+                        18:00 - 22:00
+                      </p>
+                      <p className="max-w-xs text-sm text-[#6a4930]">
+                        {tr(
+                          locale,
+                          "Choose your time and table for today's service.",
+                          "Өнөөдрийн үйлчилгээний цагаас сонгоод ширээгээ аваарай.",
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             <OpenDeckLineup
               locale={locale}

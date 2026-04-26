@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { EventCard } from "../components/eventCard";
 import { tr } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/i18n-server";
+import { DAILY_RESERVATION_PREFIX } from "@/lib/daily-reservation";
 import {
   formatWeekRange,
   getCurrentWeekWindow,
@@ -15,7 +16,11 @@ export default async function EventsPage() {
   const now = new Date();
   const { start: weekStart } = getCurrentWeekWindow(now);
   const events = await prisma.event.findMany({
-    where: { isPublished: true, startsAt: { gte: weekStart } },
+    where: {
+      isPublished: true,
+      startsAt: { gte: weekStart },
+      NOT: { id: { startsWith: DAILY_RESERVATION_PREFIX } },
+    },
     orderBy: { startsAt: "asc" },
   });
   const weekGroups = groupByWeek(events, now);
