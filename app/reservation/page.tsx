@@ -53,6 +53,7 @@ export default function ReservationRoot() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(true);
 
   const load = async () => {
     setLoading(true);
@@ -61,6 +62,16 @@ export default function ReservationRoot() {
       const { data } = await supabaseClient.auth.getSession();
       const token = data.session?.access_token ?? null;
       setLoggedIn(!!token);
+
+      const settingsRes = await fetch("/api/reservations/settings", {
+        cache: "no-store",
+      }).catch(() => null);
+      if (settingsRes?.ok) {
+        const settings = (await settingsRes.json()) as {
+          paymentRequired?: boolean;
+        };
+        setPaymentRequired(settings.paymentRequired !== false);
+      }
 
       if (!token) {
         setRows([]);
@@ -142,11 +153,17 @@ export default function ReservationRoot() {
               {tr(locale, "Approved Reservations", "Баталгаажсан захиалгууд")}
             </p>
             <p className="mt-1 text-xs text-emerald-100/80">
-              {tr(
-                locale,
-                "Your payment is verified by admin. Your table is confirmed.",
-                "Таны төлбөрийг админ баталгаажуулсан. Таны ширээ баталгаатай.",
-              )}
+              {paymentRequired
+                ? tr(
+                    locale,
+                    "Your payment is verified by admin. Your table is confirmed.",
+                    "Таны төлбөрийг админ баталгаажуулсан. Таны ширээ баталгаатай.",
+                  )
+                : tr(
+                    locale,
+                    "Your reservation is confirmed.",
+                    "Таны захиалга баталгаажсан.",
+                  )}
             </p>
           </div>
         )}
@@ -194,17 +211,21 @@ export default function ReservationRoot() {
                   <p className="mt-2 text-xs text-amber-100/70">
                     {fmt(r.reservedFor)} • {tr(locale, "Table", "Ширээ")} #{r.tableNo} • {r.guests} {tr(locale, "people", "хүн")}
                   </p>
-                  <p className="mt-1 text-xs text-amber-100/70">
-                    {tr(locale, "Payment Ref", "Төлбөрийн код")}:{" "}
-                    <span className="font-semibold text-amber-200">{ref}</span>
-                  </p>
-                  <p className="mt-1 text-xs text-amber-100/70">
-                    {tr(locale, "Expected Amount", "Төлөх дүн")}:{" "}
-                    <span className="font-semibold text-amber-200">
-                      {expected.toLocaleString()} {r.event?.currency || "MNT"}
-                    </span>
-                  </p>
-                  {r.surchargeAmount > 0 ? (
+                  {paymentRequired ? (
+                    <>
+                      <p className="mt-1 text-xs text-amber-100/70">
+                        {tr(locale, "Payment Ref", "Төлбөрийн код")}:{" "}
+                        <span className="font-semibold text-amber-200">{ref}</span>
+                      </p>
+                      <p className="mt-1 text-xs text-amber-100/70">
+                        {tr(locale, "Expected Amount", "Төлөх дүн")}:{" "}
+                        <span className="font-semibold text-amber-200">
+                          {expected.toLocaleString()} {r.event?.currency || "MNT"}
+                        </span>
+                      </p>
+                    </>
+                  ) : null}
+                  {paymentRequired && r.surchargeAmount > 0 ? (
                     <p className="mt-1 text-xs text-amber-100/70">
                       {tr(locale, "Surcharge", "Нэмэгдэл")}:{" "}
                       <span className="font-semibold text-amber-200">

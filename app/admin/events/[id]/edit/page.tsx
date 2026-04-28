@@ -19,6 +19,8 @@ type EventDTO = {
   id: string;
   title: string;
   description: string | null;
+  djName: string | null;
+  djType: string | null;
   imageUrl: string | null;
   price: number;
   currency: string;
@@ -132,6 +134,8 @@ export default function AdminEditEventPage() {
         body: JSON.stringify({
           title: form.title.trim(),
           description: form.description?.trim() || null,
+          djName: form.djName?.trim() || null,
+          djType: form.djType?.trim() || null,
           imageUrl: form.imageUrl?.trim() || null,
           price: Number(form.price),
           currency: form.currency,
@@ -223,6 +227,24 @@ export default function AdminEditEventPage() {
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
+              />
+            </Field>
+
+            <Field label={tr(locale, "DJ name", "DJ нэр")}>
+              <input
+                className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
+                value={form.djName ?? ""}
+                onChange={(e) => setForm({ ...form, djName: e.target.value })}
+                placeholder={tr(locale, "DJ name...", "DJ нэр...")}
+              />
+            </Field>
+
+            <Field label={tr(locale, "DJ type", "DJ төрөл")}>
+              <input
+                className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
+                value={form.djType ?? ""}
+                onChange={(e) => setForm({ ...form, djType: e.target.value })}
+                placeholder={tr(locale, "Afro House / Techno / Hip Hop...", "Afro House / Techno / Hip Hop...")}
               />
             </Field>
 

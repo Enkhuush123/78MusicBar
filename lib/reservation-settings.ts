@@ -4,12 +4,10 @@ const RESERVATION_SETTINGS_SLUG = "reservation_settings";
 
 type ReservationSettings = {
   paymentRequired: boolean;
-  allowCustomDate: boolean;
 };
 
 const DEFAULT_SETTINGS: ReservationSettings = {
   paymentRequired: true,
-  allowCustomDate: false,
 };
 
 function parseSettings(body?: string | null): ReservationSettings {
@@ -21,10 +19,6 @@ function parseSettings(body?: string | null): ReservationSettings {
         typeof parsed.paymentRequired === "boolean"
           ? parsed.paymentRequired
           : DEFAULT_SETTINGS.paymentRequired,
-      allowCustomDate:
-        typeof parsed.allowCustomDate === "boolean"
-          ? parsed.allowCustomDate
-          : DEFAULT_SETTINGS.allowCustomDate,
     };
   } catch {
     return DEFAULT_SETTINGS;

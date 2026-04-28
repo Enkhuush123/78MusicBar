@@ -17,6 +17,8 @@ export async function POST(req: Request) {
 
   const title = String(body?.title ?? "").trim();
   const description = body?.description ? String(body.description) : null;
+  const djName = body?.djName ? String(body.djName).trim() : null;
+  const djType = body?.djType ? String(body.djType).trim() : null;
   const imageUrl = body?.imageUrl ? String(body.imageUrl) : null;
 
   const price = Number(body?.price ?? 0);
@@ -39,6 +41,8 @@ export async function POST(req: Request) {
     data: {
       title,
       description,
+      djName,
+      djType,
       imageUrl,
       price: Number.isNaN(price) ? 0 : price,
       currency,

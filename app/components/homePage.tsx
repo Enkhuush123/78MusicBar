@@ -3,7 +3,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { tr } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/i18n-server";
-import ReviewsSection from "@/app/components/reviewsSection";
 import CollectionsShowcase from "@/app/components/collections-showcase";
 import UpcomingRow from "@/app/components/upcoming-row";
 import OpenDeckLineup from "@/app/components/openDeckLineup";
@@ -16,7 +15,7 @@ import {
   parseHomeInstagramPosts,
 } from "@/lib/home-instagram-posts";
 import { getCurrentWeekWindow } from "@/lib/event-weeks";
-import { getReservationSettings } from "@/lib/reservation-settings";
+import { formatEventDateTime } from "@/lib/event-datetime";
 
 const FIXED_TYPES = [
   { key: "dj", nameEn: "DJ", nameMn: "DJ" },
@@ -30,11 +29,6 @@ function normalizeTypeKey(nameEn: string, nameMn: string) {
   if (raw.includes("band") || raw.includes("хамтлаг")) return "band";
   if (raw.includes("artist") || raw.includes("уран")) return "artist";
   return null;
-}
-
-function formatDateTime(d: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} • ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function toSafeImageUrl(value?: string | null) {
@@ -81,11 +75,6 @@ export default async function HomePage() {
   const nextSevenDays = new Date(now);
   nextSevenDays.setDate(nextSevenDays.getDate() + 7);
   const { start: weekStart, end: weekEnd } = getCurrentWeekWindow(now);
-  const reservationSettings = await safeDb(
-    "reservationSettings",
-    () => getReservationSettings(),
-    { paymentRequired: true, allowCustomDate: false },
-  );
 
   const hero = await safeDb(
     "homeHero.findFirst",
@@ -153,18 +142,6 @@ export default async function HomePage() {
         },
         orderBy: { startsAt: "asc" },
         take: 6,
-      }),
-    [],
-  );
-
-  const reviews = await safeDb(
-    "review.findMany",
-    () =>
-      prisma.review.findMany({
-        where: { isApproved: true },
-        orderBy: { createdAt: "desc" },
-        take: 12,
-        select: { id: true, displayName: true, comment: true, rating: true },
       }),
     [],
   );
@@ -382,8 +359,19 @@ export default async function HomePage() {
                     {featured.title}
                   </h2>
                   <p className="mt-2 text-amber-50/80">
-                    {formatDateTime(featured.startsAt)}
+                    {formatEventDateTime(featured.startsAt, locale)}
                   </p>
+                  {featured.djName ? (
+                    <p className="mt-2 text-amber-50/80">
+                      {tr(locale, "DJ name", "DJ нэр")}:{" "}
+                      <span className="font-semibold text-amber-100">{featured.djName}</span>
+                    </p>
+                  ) : null}
+                  {featured.djType ? (
+                    <p className="mt-2 inline-flex rounded-full border border-amber-300/35 bg-amber-200/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-100">
+                      {tr(locale, "DJ type", "DJ төрөл")}: {featured.djType}
+                    </p>
+                  ) : null}
                   <p className="text-amber-50/80">
                     {featured.price.toLocaleString()} {featured.currency} •{" "}
                     {featured.venue}
@@ -432,60 +420,12 @@ export default async function HomePage() {
                   price: e.price,
                   currency: e.currency,
                   venue: e.venue,
+                  djName: e.djName ?? null,
+                  djType: e.djType ?? null,
                   startsAt: e.startsAt.toISOString(),
                 }))}
               />
             </div>
-
-            {reservationSettings.allowCustomDate ? (
-              <div className="ger-surface min-w-0 overflow-hidden rounded-3xl border border-[#d7bc93] p-0">
-                <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-                  <div>
-                    <div className="px-4 py-5 sm:px-6 sm:py-6">
-                      <p className="ger-kicker">
-                        {tr(locale, "Today", "Өнөөдөр")}
-                      </p>
-                      <h2 className="jazz-heading text-[1.9rem] text-[#2f2116] sm:text-4xl">
-                        {tr(locale, "Reserve Table Today", "Өнөөдөр ширээ захиалах")}
-                      </h2>
-                      <p className="mt-2 max-w-2xl text-sm text-[#5a412d] sm:text-base">
-                        {tr(
-                          locale,
-                          "Open today-only reservations between 18:00 and 22:00.",
-                          "Өнөөдрийн 18:00-22:00 цагийн хооронд ширээгээ шууд захиалаарай.",
-                        )}
-                      </p>
-                      <Link
-                        href="/reserve"
-                        className="ger-btn-primary mt-4 inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold"
-                      >
-                        {tr(locale, "Reserve Table Today", "Өнөөдөр ширээ захиалах")}
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="relative min-h-[220px] bg-[radial-gradient(circle_at_top,rgba(255,246,226,0.95),rgba(244,233,216,0.82)_38%,rgba(215,188,147,0.42)_100%)]">
-                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.38)_0%,rgba(255,255,255,0)_45%)]" />
-                    <div className="relative flex h-full min-h-[220px] flex-col items-center justify-center gap-3 px-6 py-8 text-center">
-                      <img
-                        src="/78MusicBar.png"
-                        alt="78MusicBar"
-                        className="h-20 w-auto object-contain sm:h-24"
-                      />
-                      <p className="text-xs uppercase tracking-[0.28em] text-[#7a573b]">
-                        18:00 - 22:00
-                      </p>
-                      <p className="max-w-xs text-sm text-[#6a4930]">
-                        {tr(
-                          locale,
-                          "Choose your time and table for today's service.",
-                          "Өнөөдрийн үйлчилгээний цагаас сонгоод ширээгээ аваарай.",
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
 
             <OpenDeckLineup
               locale={locale}
@@ -503,8 +443,6 @@ export default async function HomePage() {
                   : null,
               }))}
             />
-
-            <ReviewsSection locale={locale} initialReviews={reviews} embedded />
           </div>
 
           <div className="min-w-0 space-y-4 xl:sticky xl:top-24 xl:h-fit">

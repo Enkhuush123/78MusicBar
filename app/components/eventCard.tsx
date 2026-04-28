@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { tr } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/i18n-server";
+import { formatEventDate, formatEventTime } from "@/lib/event-datetime";
 
 type DbProps = {
   variant?: "db";
@@ -12,6 +13,8 @@ type DbProps = {
   price: string;
   currency: string;
   venue: string;
+  djName?: string | null;
+  djType?: string | null;
   startsAt: Date | string;
   description?: string | null;
 };
@@ -65,12 +68,8 @@ export const EventCard = async (props: Props) => {
     );
   }
 
-  const d = new Date(props.startsAt);
-  const date = d.toLocaleDateString("mn-MN");
-  const time = d.toLocaleTimeString("mn-MN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const date = formatEventDate(props.startsAt, locale);
+  const time = formatEventTime(props.startsAt);
 
   return (
     <div className="jazz-panel min-w-0 overflow-hidden rounded-2xl shadow-sm transition hover:-translate-y-1">
@@ -90,6 +89,18 @@ export const EventCard = async (props: Props) => {
             {date} • {time}
           </p>
           <p>{props.venue}</p>
+          {props.djName ? (
+            <p>
+              {tr(locale, "DJ name", "DJ нэр")}:{" "}
+              <span className="font-semibold text-amber-200">{props.djName}</span>
+            </p>
+          ) : null}
+          {props.djType ? (
+            <p>
+              {tr(locale, "DJ type", "DJ төрөл")}:{" "}
+              <span className="font-semibold text-amber-200">{props.djType}</span>
+            </p>
+          ) : null}
           <p>
             {tr(locale, "Price", "Үнэ")}:{" "}
             <span className="font-semibold text-amber-200">

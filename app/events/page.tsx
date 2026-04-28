@@ -80,6 +80,8 @@ export default async function EventsPage() {
                         price={String(e.price)}
                         currency={e.currency}
                         venue={e.venue}
+                        djName={e.djName}
+                        djType={e.djType}
                         startsAt={e.startsAt}
                         description={e.description}
                       />

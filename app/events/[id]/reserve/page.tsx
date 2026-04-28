@@ -23,6 +23,8 @@ export default async function Page({
       id: true,
       title: true,
       description: true,
+      djName: true,
+      djType: true,
       imageUrl: true,
       venue: true,
       price: true,
@@ -49,13 +51,14 @@ export default async function Page({
       eventTitle={e.title}
       eventPrice={e.price}
       eventCurrency={e.currency}
+      djName={e.djName ?? null}
+      djType={e.djType ?? null}
       startsAt={e.startsAt.toISOString()}
       endsAt={e.endsAt ? e.endsAt.toISOString() : null}
       eventDescription={e.description ?? null}
       eventImageUrl={e.imageUrl ?? null}
       venue={e.venue ?? null}
       paymentRequired={settings.paymentRequired}
-      allowCustomDate={false}
     />
   );
 }

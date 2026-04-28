@@ -68,6 +68,18 @@ export default async function AdminEventsPage() {
                   {tr(locale, "Price", "Үнэ")}: {e.price.toLocaleString()} {e.currency} • {tr(locale, "Venue", "Байршил")}:{" "}
                   {e.venue}
                 </p>
+                {e.djName ? (
+                  <p className="mt-1 text-sm text-amber-100/75">
+                    {tr(locale, "DJ name", "DJ нэр")}:{" "}
+                    <span className="font-semibold text-amber-200">{e.djName}</span>
+                  </p>
+                ) : null}
+                {e.djType ? (
+                  <p className="mt-1 text-sm text-amber-100/75">
+                    {tr(locale, "DJ type", "DJ төрөл")}:{" "}
+                    <span className="font-semibold text-amber-200">{e.djType}</span>
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex flex-wrap gap-2">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import type { Locale } from "@/lib/i18n";
 import { tr } from "@/lib/i18n";
+import { formatEventDateTime, getEventDayBadge } from "@/lib/event-datetime";
 
 type RowEvent = {
   id: string;
@@ -13,28 +14,10 @@ type RowEvent = {
   price: number;
   currency: string;
   venue: string;
+  djName: string | null;
+  djType: string | null;
   startsAt: string;
 };
-
-function fmt(d: string) {
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return d;
-  const yyyy = dt.getUTCFullYear();
-  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getUTCDate()).padStart(2, "0");
-  const hh = String(dt.getUTCHours()).padStart(2, "0");
-  const min = String(dt.getUTCMinutes()).padStart(2, "0");
-  return `${yyyy}.${mm}.${dd} • ${hh}:${min}`;
-}
-
-function dayBadge(d: string) {
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return { day: "--", month: "" };
-  return {
-    day: String(dt.getUTCDate()).padStart(2, "0"),
-    month: dt.toLocaleString("en", { month: "short", timeZone: "UTC" }),
-  };
-}
 
 export default function UpcomingRow({
   locale,
@@ -81,7 +64,7 @@ export default function UpcomingRow({
         className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 pr-4"
       >
         {events.map((e) => {
-          const badge = dayBadge(e.startsAt);
+          const badge = getEventDayBadge(e.startsAt);
           return (
             <article
               key={e.id}
@@ -111,8 +94,20 @@ export default function UpcomingRow({
 
               <div className="grid gap-3 p-4">
                 <div className="grid gap-1 text-sm text-amber-50/78">
-                  <p>{fmt(e.startsAt)}</p>
+                  <p>{formatEventDateTime(e.startsAt, locale)}</p>
                   <p className="line-clamp-1">{e.venue}</p>
+                  {e.djName ? (
+                    <p>
+                      {tr(locale, "DJ name", "DJ нэр")}:{" "}
+                      <span className="font-semibold text-amber-200">{e.djName}</span>
+                    </p>
+                  ) : null}
+                  {e.djType ? (
+                    <p>
+                      {tr(locale, "DJ type", "DJ төрөл")}:{" "}
+                      <span className="font-semibold text-amber-200">{e.djType}</span>
+                    </p>
+                  ) : null}
                   <p>
                     {tr(locale, "Price", "Үнэ")}:{" "}
                     <span className="font-semibold text-amber-200">

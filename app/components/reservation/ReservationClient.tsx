@@ -7,7 +7,6 @@ import { Armchair } from "lucide-react";
 import { supabase as supabaseClient } from "@/lib/supabase/browser";
 import { useLocale } from "@/app/components/use-locale";
 import { tr } from "@/lib/i18n";
-import { getTodayReservationDateInput } from "@/lib/daily-reservation";
 import {
   combineDateAndTime,
   pad2,
@@ -21,15 +20,14 @@ type Props = {
   eventTitle: string;
   eventPrice: number;
   eventCurrency: string;
+  djName?: string | null;
+  djType?: string | null;
   startsAt: string;
   endsAt: string | null;
   eventDescription?: string | null;
   eventImageUrl?: string | null;
-  heroLogoSrc?: string | null;
   venue?: string | null;
   paymentRequired?: boolean;
-  allowCustomDate?: boolean;
-  bookingMode?: "event" | "daily";
 };
 
 type Zone = "left" | "center" | "rightEntrance" | "rightCorner";
@@ -96,6 +94,10 @@ function formatDateTime(iso: string) {
   return `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())} ${pad2(
     d.getHours(),
   )}:${pad2(d.getMinutes())}`;
+}
+
+function maxTime(a: string, b: string) {
+  return a >= b ? a : b;
 }
 
 function ZoneBlock({
@@ -172,15 +174,14 @@ export default function ReservationClient({
   eventTitle,
   eventPrice,
   eventCurrency,
+  djName,
+  djType,
   startsAt,
   endsAt,
   eventDescription,
   eventImageUrl,
-  heroLogoSrc,
   venue,
   paymentRequired = true,
-  allowCustomDate = false,
-  bookingMode = "event",
 }: Props) {
   const { locale } = useLocale();
   const [selected, setSelected] = useState<string | null>(null);
@@ -196,22 +197,14 @@ export default function ReservationClient({
     null,
   );
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const displayTitle =
-    bookingMode === "daily"
-      ? tr(locale, eventTitle, "Өнөөдөр ширээ захиалах")
-      : eventTitle;
-  const displayDescription =
-    bookingMode === "daily"
-      ? tr(
-          locale,
-          "Today reservations are available from 18:00 to 22:00. Choose your time and table below.",
-          "Өнөөдрийн захиалга 18:00-22:00 цагийн хооронд нээлттэй. Доороос цагаа болон ширээгээ сонгоно уу.",
-        )
-      : eventDescription;
 
   const defaultEventDate = useMemo(() => toDateInput(startsAt), [startsAt]);
   const [eventDate, setEventDate] = useState(defaultEventDate);
-  const [reservedTime, setReservedTime] = useState(() => toTimeInput(startsAt));
+  const defaultReservationTime = useMemo(
+    () => maxTime(toTimeInput(startsAt), "18:00"),
+    [startsAt],
+  );
+  const [reservedTime, setReservedTime] = useState(defaultReservationTime);
   const reservedForLocal = useMemo(
     () => combineDateAndTime(eventDate, reservedTime),
     [eventDate, reservedTime],
@@ -226,15 +219,8 @@ export default function ReservationClient({
   }, [defaultEventDate]);
 
   useEffect(() => {
-    setReservedTime(
-      toTimeInput(startsAt),
-    );
-  }, [startsAt]);
-
-  useEffect(() => {
-    if (bookingMode !== "daily") return;
-    setEventDate(getTodayReservationDateInput());
-  }, [bookingMode]);
+    setReservedTime(defaultReservationTime);
+  }, [defaultReservationTime]);
 
   useEffect(() => {
     const load = async () => {
@@ -265,8 +251,7 @@ export default function ReservationClient({
 
       const iso = new Date(reservedForLocal).toISOString();
       const sp = new URLSearchParams();
-      if (bookingMode === "event" && eventId) sp.set("eventId", eventId);
-      if (bookingMode === "daily") sp.set("reservationDate", eventDate);
+      if (eventId) sp.set("eventId", eventId);
       sp.set("reservedFor", iso);
       const res = await fetch(
         `/api/reservations?${sp.toString()}`,
@@ -279,7 +264,7 @@ export default function ReservationClient({
     };
 
     run();
-  }, [reservedForLocal, eventId, bookingMode, eventDate]);
+  }, [reservedForLocal, eventId]);
 
   const tables: Table[] = useMemo(() => {
     return BASE_TABLES.map((t) => ({
@@ -303,8 +288,11 @@ export default function ReservationClient({
   const maxPeople = seat.max;
   const safePeople = Math.min(Math.max(minPeople, people), maxPeople);
   const surchargeAmount = useMemo(
-    () => getReservationSurcharge(reservedForLocal, reservedSet.size),
-    [reservedForLocal, reservedSet],
+    () =>
+      paymentRequired
+        ? getReservationSurcharge(reservedForLocal, reservedSet.size)
+        : 0,
+    [paymentRequired, reservedForLocal, reservedSet],
   );
   const totalPrice = safePeople * eventPrice + surchargeAmount;
 
@@ -317,8 +305,7 @@ export default function ReservationClient({
     if (!reservedForLocal) return;
     const iso = new Date(reservedForLocal).toISOString();
     const sp = new URLSearchParams();
-    if (bookingMode === "event" && eventId) sp.set("eventId", eventId);
-    if (bookingMode === "daily") sp.set("reservationDate", eventDate);
+    if (eventId) sp.set("eventId", eventId);
     sp.set("reservedFor", iso);
     const res = await fetch(
       `/api/reservations?${sp.toString()}`,
@@ -350,8 +337,7 @@ export default function ReservationClient({
         note: note.trim() || undefined,
         acceptedPolicy: true,
       };
-      if (bookingMode === "event" && eventId) payload.eventId = eventId;
-      if (bookingMode === "daily") payload.reservationDate = eventDate;
+      if (eventId) payload.eventId = eventId;
 
       if (!token) {
         payload.name = name.trim();
@@ -526,73 +512,59 @@ export default function ReservationClient({
             {eventImageUrl ? (
               <img
                 src={eventImageUrl}
-                alt={displayTitle}
+                alt={eventTitle}
                 className="h-full w-full object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(245,215,170,0.18),transparent_58%),linear-gradient(180deg,rgba(51,35,24,0.96)_0%,rgba(23,16,12,0.98)_100%)] text-sm text-amber-100/70">
-                {bookingMode === "daily" ? (
-                  <div className="text-center">
-                    <p className="jazz-heading text-2xl text-amber-100">
-                      78MusicBar
-                    </p>
-                    <p className="mt-2 text-xs uppercase tracking-[0.24em] text-amber-200/70">
-                      {tr(locale, "Today Only", "Зөвхөн өнөөдөр")}
-                    </p>
-                  </div>
-                ) : (
-                  tr(locale, "No image", "Зураг алга")
-                )}
+                {tr(locale, "No image", "Зураг алга")}
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0 md:bg-gradient-to-r md:from-black/25 md:via-black/0 md:to-black/0" />
-            {heroLogoSrc ? (
-              <div className="absolute left-4 top-4 rounded-2xl border border-amber-200/30 bg-[#fff7ea]/90 px-3 py-2 shadow-lg backdrop-blur">
-                <img
-                  src={heroLogoSrc}
-                  alt="78MusicBar"
-                  className="h-10 w-auto object-contain sm:h-12"
-                />
-              </div>
-            ) : null}
           </div>
 
           <div className="p-4 sm:p-5 md:p-6">
             <p className="jazz-heading text-sm text-amber-200">
-              {bookingMode === "daily"
-                ? tr(locale, "Reservation", "Захиалга")
-                : tr(locale, "Event", "Эвент")}
+              {tr(locale, "Event", "Эвент")}
             </p>
             <h1 className="jazz-heading mt-1 text-[2rem] text-amber-50 sm:text-4xl">
-              {displayTitle}
+              {eventTitle}
             </h1>
 
             <div className="mt-2 text-sm text-amber-100/80">
               <p>
-                🗓{" "}
-                {bookingMode === "daily"
-                  ? formatDateTime(reservedForLocal)
-                  : formatDateTime(startsAt)}
+                🗓 {formatDateTime(startsAt)}
                 {endsAt ? ` — ${formatDateTime(endsAt)}` : ""}
               </p>
               <p className="mt-1">📍 {venue || "78MusicBar"}</p>
-              {bookingMode === "event" ? (
-                <p className="mt-1">
-                  💳 {tr(locale, "Price per person", "1 хүний үнэ")}:{" "}
-                  <span className="font-semibold text-amber-200">
-                    {eventPrice.toLocaleString()} {eventCurrency}
-                  </span>
+              {djName ? (
+                <p className="mt-2 text-amber-50/80">
+                  {tr(locale, "DJ name", "DJ нэр")}:{" "}
+                  <span className="font-semibold text-amber-100">{djName}</span>
                 </p>
               ) : null}
-              {bookingMode !== "daily" ? (
-                <p className="mt-1">
-                  💰 {tr(locale, "Total", "Нийт")}:{" "}
-                  <span className="font-semibold text-amber-200">
-                    {totalPrice.toLocaleString()} {eventCurrency}
-                  </span>
+              {djType ? (
+                <p className="mt-2 inline-flex rounded-full border border-amber-300/35 bg-amber-200/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-100">
+                  {tr(locale, "DJ type", "DJ төрөл")}: {djType}
                 </p>
               ) : null}
-              {bookingMode !== "daily" && surchargeAmount > 0 ? (
+              {paymentRequired ? (
+                <>
+                  <p className="mt-1">
+                    💳 {tr(locale, "Price per person", "1 хүний үнэ")}:{" "}
+                    <span className="font-semibold text-amber-200">
+                      {eventPrice.toLocaleString()} {eventCurrency}
+                    </span>
+                  </p>
+                  <p className="mt-1">
+                    💰 {tr(locale, "Total", "Нийт")}:{" "}
+                    <span className="font-semibold text-amber-200">
+                      {totalPrice.toLocaleString()} {eventCurrency}
+                    </span>
+                  </p>
+                </>
+              ) : null}
+              {paymentRequired && surchargeAmount > 0 ? (
                 <p className="mt-1 text-amber-100/90">
                   ⚠ {tr(locale, "Busy / late surcharge", "Ачаалал / оройн нэмэгдэл")}:{" "}
                   <span className="font-semibold text-amber-200">
@@ -602,9 +574,9 @@ export default function ReservationClient({
               ) : null}
             </div>
 
-            {displayDescription ? (
+            {eventDescription ? (
               <p className="mt-4 text-sm leading-relaxed text-amber-100/80">
-                {displayDescription}
+                {eventDescription}
               </p>
             ) : (
               <p className="mt-4 text-sm text-amber-100/70">
@@ -674,76 +646,38 @@ export default function ReservationClient({
               <p className="text-sm text-amber-100/70">
                 {tr(locale, "Date / Time", "Огноо / цаг")}
               </p>
-              {bookingMode === "daily" ? (
-                <div className="mt-3 space-y-3">
-                  <div className="rounded-2xl border border-amber-300/20 bg-black/20 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-amber-200/70">
-                      {tr(locale, "Today", "Өнөөдөр")}
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-amber-50">
-                      {formatDateTime(
-                        combineDateAndTime(eventDate, reservedTime) || "",
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <input
-                      type="time"
-                      step={300}
-                      min="18:00"
-                      max="22:00"
-                      value={reservedTime}
-                      onChange={(e) => setReservedTime(e.target.value)}
-                      className="mt-1 w-full rounded-md px-3 py-2 text-amber-50"
-                    />
-                  </div>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-amber-100/60">
+                    {tr(locale, "Event day", "Эвентийн өдөр")}
+                  </p>
+                  <input
+                    type="date"
+                    value={eventDate}
+                    readOnly
+                    className="mt-1 w-full rounded-md px-3 py-2 text-amber-50 opacity-80"
+                  />
                 </div>
-              ) : (
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs text-amber-100/60">
-                      {tr(locale, "Event day", "Эвентийн өдөр")}
-                    </p>
-                    <input
-                      type="date"
-                      value={eventDate}
-                      readOnly={!allowCustomDate}
-                      onChange={(e) => setEventDate(e.target.value)}
-                      className={`mt-1 w-full rounded-md px-3 py-2 text-amber-50 ${allowCustomDate ? "" : "opacity-80"}`}
-                    />
-                  </div>
-                  <div>
-                    <p className="text-xs text-amber-100/60">
-                      {tr(locale, "Reservation time", "Захиалах цаг")}
-                    </p>
-                    <input
-                      type="time"
-                      step={300}
-                      value={reservedTime}
-                      onChange={(e) => setReservedTime(e.target.value)}
-                      className="mt-1 w-full rounded-md px-3 py-2 text-amber-50"
-                    />
-                  </div>
+                <div>
+                  <p className="text-xs text-amber-100/60">
+                    {tr(locale, "Reservation time", "Захиалах цаг")}
+                  </p>
+                  <input
+                    type="time"
+                    step={300}
+                    min="18:00"
+                    value={reservedTime}
+                    onChange={(e) => setReservedTime(e.target.value)}
+                    className="mt-1 w-full rounded-md px-3 py-2 text-amber-50"
+                  />
                 </div>
-              )}
+              </div>
               <p className="mt-2 text-xs text-amber-100/70">
-                {bookingMode === "daily"
-                  ? tr(
-                      locale,
-                      "Choose your own time between 18:00 and 22:00.",
-                      "18:00-22:00 цагийн хооронд цагаа өөрөө сонгоно.",
-                    )
-                  : allowCustomDate
-                  ? tr(
-                      locale,
-                      "Choose the reservation date and exact arrival time.",
-                      "Захиалах өдөр болон яг ирэх цагаа сонгоно уу.",
-                    )
-                  : tr(
-                      locale,
-                      "Choose the exact arrival time for this event day.",
-                      "Энэ өдрийн яг хэдэн цагт ирэхээ сонгоно уу.",
-                    )}
+                {tr(
+                  locale,
+                  "Choose your arrival time from 18:00 on this event day.",
+                  "Энэ өдрийн 18:00 цагаас хойших ирэх цагаа сонгоно уу.",
+                )}
               </p>
               <p className="mt-2 text-xs text-amber-100/70">
                 {isLoggedIn
@@ -857,8 +791,6 @@ export default function ReservationClient({
           >
             {loading
               ? tr(locale, "Submitting...", "Илгээж байна...")
-              : bookingMode === "daily"
-                ? tr(locale, "Reserve Table Today", "Өнөөдөр ширээ захиалах")
               : paymentRequired
                 ? tr(
                     locale,
@@ -894,7 +826,9 @@ export default function ReservationClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-amber-300/35 bg-[linear-gradient(165deg,rgba(35,26,20,0.98)_0%,rgba(26,20,15,0.98)_100%)] p-6">
             <p className="jazz-heading text-xl text-amber-100">
-              {tr(locale, "Before Payment", "Төлбөр хийхийн өмнө")}
+              {paymentRequired
+                ? tr(locale, "Before Payment", "Төлбөр хийхийн өмнө")
+                : tr(locale, "Before Reservation", "Захиалга хийхийн өмнө")}
             </p>
             <p className="mt-3 text-sm text-amber-100/90">
               {tr(

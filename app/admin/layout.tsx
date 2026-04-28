@@ -18,7 +18,6 @@ export default async function AdminLayout({
   const contentLinks = [
     { href: "/admin/events", label: tr(locale, "Events", "Эвент") },
     { href: "/admin/about", label: tr(locale, "About Us", "Бидний тухай") },
-    { href: "/admin/reviews", label: tr(locale, "Reviews", "Сэтгэгдэл") },
     {
       href: "/admin/collections",
       label: tr(locale, "Collections", "Collection"),

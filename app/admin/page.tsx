@@ -52,15 +52,6 @@ export default async function AdminPage() {
         " Уух зүйлсийн жагсаалт болон тусгай коктейлийг нэмэх.",
       ),
     },
-    {
-      href: "/admin/reviews",
-      title: tr(locale, "Reviews", "Сэтгэгдэл"),
-      text: tr(
-        locale,
-        "Moderate review content and visibility.",
-        "Сэтгэгдлийн контент, харагдах байдлыг хянах.",
-      ),
-    },
   ];
 
   return (

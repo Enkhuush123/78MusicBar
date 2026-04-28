@@ -4,10 +4,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { tr } from "@/lib/i18n";
 import { useLocale } from "@/app/components/use-locale";
-import {
-  buildDailyTimeOptions,
-  getTodayReservationDateInput,
-} from "@/lib/daily-reservation";
 
 type Row = {
   id: string;
@@ -35,6 +31,13 @@ type Row = {
   } | null;
 };
 
+type EventOption = {
+  id: string;
+  title: string;
+  startsAt: string;
+  isPublished: boolean;
+};
+
 const cn = (...s: (string | false | undefined)[]) =>
   s.filter(Boolean).join(" ");
 
@@ -45,12 +48,6 @@ function fmt(dt: string) {
   const d = new Date(dt);
   if (Number.isNaN(d.getTime())) return dt;
   return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function combineDateTime(date: string, time: string) {
-  if (!date || !time) return null;
-  const parsed = new Date(`${date}T${time}:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
 const TABLES = Array.from({ length: 22 }, (_, i) => i + 1);
@@ -66,12 +63,10 @@ export default function AdminReservationsPage() {
   >("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [events, setEvents] = useState<EventOption[]>([]);
+  const [manualEventId, setManualEventId] = useState("");
   const [paymentRequired, setPaymentRequired] = useState(true);
-  const [allowCustomDate, setAllowCustomDate] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
-  const [manualDate] = useState(() => getTodayReservationDateInput());
-  const manualTimeOptions = useMemo(() => buildDailyTimeOptions(30), []);
-  const [manualTime, setManualTime] = useState(() => manualTimeOptions[0] || "18:00");
   const [manualTableNo, setManualTableNo] = useState<number | null>(null);
   const [manualReserved, setManualReserved] = useState<number[]>([]);
   const [manualSaving, setManualSaving] = useState(false);
@@ -123,22 +118,30 @@ export default function AdminReservationsPage() {
       cache: "no-store",
     }).catch(() => null);
     if (!res?.ok) return;
-    const data = (await res.json()) as {
-      paymentRequired?: boolean;
-      allowCustomDate?: boolean;
-    };
+    const data = (await res.json()) as { paymentRequired?: boolean };
     setPaymentRequired(data.paymentRequired !== false);
-    setAllowCustomDate(data.allowCustomDate === true);
+  };
+
+  const loadEvents = async () => {
+    const res = await fetch("/api/admin/events", {
+      cache: "no-store",
+    }).catch(() => null);
+    if (!res?.ok) return;
+    const data = (await res.json()) as { events?: EventOption[] };
+    const rows = (data.events ?? []).filter((event) => event.isPublished);
+    setEvents(rows);
+    setManualEventId((prev) => prev || rows[0]?.id || "");
   };
 
   const loadManualReserved = async () => {
-    const reservedFor = combineDateTime(manualDate, manualTime);
-    if (!reservedFor) {
+    const event = events.find((row) => row.id === manualEventId);
+    if (!event) {
       setManualReserved([]);
       return;
     }
+    const reservedFor = new Date(event.startsAt).toISOString();
     const res = await fetch(
-      `/api/reservations?reservationDate=${encodeURIComponent(manualDate)}&reservedFor=${encodeURIComponent(reservedFor)}`,
+      `/api/reservations?eventId=${encodeURIComponent(manualEventId)}&reservedFor=${encodeURIComponent(reservedFor)}`,
       { cache: "no-store" },
     ).catch(() => null);
     if (!res?.ok) {
@@ -152,6 +155,7 @@ export default function AdminReservationsPage() {
   useEffect(() => {
     load();
     loadSettings();
+    loadEvents();
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") load();
     }, 5000);
@@ -162,16 +166,20 @@ export default function AdminReservationsPage() {
   useEffect(() => {
     void loadManualReserved();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manualTime]);
+  }, [manualEventId, events]);
+
+  const selectedManualEvent = useMemo(
+    () => events.find((event) => event.id === manualEventId) ?? null,
+    [events, manualEventId],
+  );
 
   const createManualReservation = async () => {
-    const reservedFor = combineDateTime(manualDate, manualTime);
-    if (!reservedFor || !manualTableNo) {
+    if (!selectedManualEvent || !manualTableNo) {
       setMsg(
         tr(
           locale,
-          "Choose date, time, and table.",
-          "Өдөр, цаг, ширээгээ сонгоно уу.",
+          "Choose event and table.",
+          "Эвент болон ширээг сонгоно уу.",
         ),
       );
       return;
@@ -183,8 +191,8 @@ export default function AdminReservationsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reservationDate: manualDate,
-          reservedFor,
+          eventId: manualEventId,
+          reservedFor: new Date(selectedManualEvent.startsAt).toISOString(),
           tableNo: manualTableNo,
           guests: 2,
           adminHold: true,
@@ -245,45 +253,6 @@ export default function AdminReservationsPage() {
               locale,
               "New reservations will now be confirmed automatically.",
               "Шинэ захиалга шууд баталгааждаг боллоо.",
-            ),
-      );
-    } finally {
-      setSettingsSaving(false);
-    }
-  };
-
-  const toggleAllowCustomDate = async () => {
-    const next = !allowCustomDate;
-    setSettingsSaving(true);
-    setMsg(null);
-    try {
-      const res = await fetch("/api/admin/reservations/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ allowCustomDate: next }),
-      });
-      if (!res.ok) {
-        setMsg(
-          tr(
-            locale,
-            "Reservation date setting update failed",
-            "Захиалгын өдрийн тохиргоо хадгалагдсангүй",
-          ),
-        );
-        return;
-      }
-      setAllowCustomDate(next);
-      setMsg(
-        next
-          ? tr(
-              locale,
-              "Daily reservation section is now visible on homepage.",
-              "Энгийн өдрийн захиалгын хэсэг нүүр хуудсанд харагддаг боллоо.",
-            )
-          : tr(
-              locale,
-              "Daily reservation section is now hidden from homepage.",
-              "Энгийн өдрийн захиалгын хэсэг нүүр хуудаснаас нуугдлаа.",
             ),
       );
     } finally {
@@ -466,22 +435,29 @@ export default function AdminReservationsPage() {
             </p>
           </div>
           <p className="text-xs text-amber-100/70">
-            {tr(locale, "Today", "Өнөөдөр")}: {manualDate} • {manualTime}
+            {selectedManualEvent
+              ? `${tr(locale, "Selected", "Сонгосон")}: ${selectedManualEvent.title}`
+              : tr(locale, "Choose a published event", "Published эвент сонгоно уу")}
           </p>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_150px]">
           <select
             className="h-11 rounded-xl px-3 text-amber-50"
-            value={manualTime}
+            value={manualEventId}
             onChange={(e) => {
-              setManualTime(e.target.value);
+              setManualEventId(e.target.value);
               setManualTableNo(null);
             }}
           >
-            {manualTimeOptions.map((time) => (
-              <option key={time} value={time}>
-                {time}
+            {events.length === 0 ? (
+              <option value="">
+                {tr(locale, "No published events", "Published эвент алга")}
+              </option>
+            ) : null}
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title} • {fmt(event.startsAt)}
               </option>
             ))}
           </select>
@@ -489,10 +465,10 @@ export default function AdminReservationsPage() {
           <button
             type="button"
             onClick={createManualReservation}
-            disabled={manualSaving || !manualTableNo}
+            disabled={manualSaving || !manualTableNo || !selectedManualEvent}
             className={cn(
               "h-11 rounded-xl font-semibold transition",
-              manualSaving || !manualTableNo
+              manualSaving || !manualTableNo || !selectedManualEvent
                 ? "bg-neutral-200 text-neutral-500"
                 : "ger-btn-primary",
             )}
@@ -626,42 +602,6 @@ export default function AdminReservationsPage() {
         </button>
       </div>
 
-      <div className="reservation-soft mt-3 flex flex-col gap-3 rounded-2xl p-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-amber-50">
-            {tr(locale, "Daily Reservation Section", "Энгийн өдрийн захиалга")}
-          </p>
-          <p className="text-xs text-amber-100/80">
-            {tr(
-              locale,
-              "Show or hide the regular day reservation section on homepage.",
-              "Нүүр хуудас дээрх энгийн өдрийн захиалгын хэсгийг гаргах эсвэл нуух.",
-            )}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={toggleAllowCustomDate}
-          disabled={settingsSaving}
-          className={cn(
-            "h-10 rounded-xl px-4 text-sm font-semibold transition",
-            allowCustomDate
-              ? "border border-sky-300/45 bg-sky-500/10 text-sky-100 hover:bg-sky-300/15"
-              : "border border-amber-300/40 text-amber-100 hover:bg-amber-300/15",
-          )}
-        >
-          {settingsSaving
-            ? tr(locale, "Saving...", "Хадгалж байна...")
-            : allowCustomDate
-              ? tr(locale, "Hide Daily Reservation", "Энгийн өдрийн захиалгыг нуух")
-              : tr(
-                  locale,
-                  "Show Daily Reservation",
-                  "Энгийн өдрийн захиалгыг гаргах",
-                )}
-        </button>
-      </div>
-
       {msg && <p className="mt-3 text-sm text-amber-100">{msg}</p>}
 
       <div className="mt-6 grid gap-3">
@@ -704,21 +644,23 @@ export default function AdminReservationsPage() {
                     {r.name || r.userEmail || "—"} •{" "}
                     {r.phone || r.userPhone || "—"}
                   </p>
-                  <p className="mt-1 text-xs text-amber-100/90">
-                    {tr(locale, "Payment ref", "Төлбөрийн код")}:{" "}
-                    <span className="font-semibold text-amber-200">
-                      RSV-T{r.tableNo}-{r.id.slice(0, 8).toUpperCase()}
-                    </span>{" "}
-                    • {tr(locale, "Expected", "Хүлээгдэх дүн")}:{" "}
-                    <span className="font-semibold text-amber-200">
-                      {(
-                        (r.event?.price || 0) * r.guests +
-                        (r.surchargeAmount || 0)
-                      ).toLocaleString()}{" "}
-                      {r.event?.currency || "MNT"}
-                    </span>
-                  </p>
-                  {r.surchargeAmount > 0 ? (
+                  {paymentRequired ? (
+                    <p className="mt-1 text-xs text-amber-100/90">
+                      {tr(locale, "Payment ref", "Төлбөрийн код")}:{" "}
+                      <span className="font-semibold text-amber-200">
+                        RSV-T{r.tableNo}-{r.id.slice(0, 8).toUpperCase()}
+                      </span>{" "}
+                      • {tr(locale, "Expected", "Хүлээгдэх дүн")}:{" "}
+                      <span className="font-semibold text-amber-200">
+                        {(
+                          (r.event?.price || 0) * r.guests +
+                          (r.surchargeAmount || 0)
+                        ).toLocaleString()}{" "}
+                        {r.event?.currency || "MNT"}
+                      </span>
+                    </p>
+                  ) : null}
+                  {paymentRequired && r.surchargeAmount > 0 ? (
                     <p className="mt-1 text-xs text-amber-100/80">
                       {tr(locale, "Surcharge", "Нэмэгдэл")}:{" "}
                       <span className="font-semibold text-amber-200">

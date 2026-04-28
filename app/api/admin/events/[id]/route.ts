@@ -42,6 +42,9 @@ export async function PATCH(
       data: {
         title: body?.title?.trim(),
         description: body?.description ?? null,
+        djName:
+          typeof body?.djName === "string" ? body.djName.trim() || null : undefined,
+        djType: typeof body?.djType === "string" ? body.djType.trim() || null : undefined,
         imageUrl: body?.imageUrl ?? null,
         price: Number(body?.price ?? 0),
         currency: body?.currency ?? "MNT",

@@ -17,11 +17,7 @@ export async function PATCH(req: Request) {
     typeof body?.paymentRequired === "boolean"
       ? body.paymentRequired
       : current.paymentRequired;
-  const allowCustomDate =
-    typeof body?.allowCustomDate === "boolean"
-      ? body.allowCustomDate
-      : current.allowCustomDate;
 
-  await setReservationSettings({ paymentRequired, allowCustomDate });
-  return Response.json({ paymentRequired, allowCustomDate });
+  await setReservationSettings({ paymentRequired });
+  return Response.json({ paymentRequired });
 }

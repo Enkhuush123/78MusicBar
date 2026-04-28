@@ -11,6 +11,8 @@ model Event {
   id            String        @id @default(uuid())
   title         String
   description   String?
+  djName        String?
+  djType        String?
   imageUrl      String?
   price         Int           @default(0)
   currency      String        @default("MNT")

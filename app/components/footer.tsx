@@ -35,10 +35,12 @@ export const Footer = ({ locale }: FooterProps) => {
           <p className="jazz-heading text-sm tracking-[0.18em]">
             {tr(locale, "Visit", "Хаяг")}
           </p>
-          <p className="mt-3 text-sm text-[#4a3f34]/85">Ulaanbaatar, B1</p>
+          <p className="mt-3 text-sm text-[#4a3f34]/85">
+            CHD - 1 khoroo, Ulaanbaatar 15160
+          </p>
           <a
             className="mt-2 inline-block text-sm underline underline-offset-4"
-            href="https://www.google.com/maps/place/GERMOOD/@47.9184203,106.9116743,17z/data=!3m1!4b1!4m6!3m5!1s0x5d9693006c2af817:0x7456cb07c6f2e334!8m2!3d47.9184203!4d106.9142492!16s%2Fg%2F11xs9d5gw5?entry=ttu&g_ep=EgoyMDI2MDIxNi4wIKXMDSoASAFQAw%3D%3D"
+            href="https://www.google.com/maps/place/78MusicBar/@47.9184203,106.9116743,17z/data=!3m1!4b1!4m6!3m5!1s0x5d9693003c04d141:0xb6771c7797fabdb0!8m2!3d47.9184203!4d106.9142492!16s%2Fg%2F11n3n2v4xw?entry=ttu&g_ep=EgoyMDI2MDQyNi4wIKXMDSoASAFQAw%3D%3D"
             target="_blank"
             rel="noreferrer"
           >
@@ -50,8 +52,10 @@ export const Footer = ({ locale }: FooterProps) => {
           <p className="jazz-heading text-sm tracking-[0.18em]">
             {tr(locale, "Contact", "Холбоо барих")}
           </p>
-          <p className="mt-3 text-sm text-[#4a3f34]/85">+976 8065 1328</p>
-          <p className="break-all text-sm text-[#4a3f34]/85">78musicbar@gmail.com</p>
+          <p className="mt-3 text-sm text-[#4a3f34]/85">+976 99014683</p>
+          <p className="break-all text-sm text-[#4a3f34]/85">
+            78musicbar@gmail.com
+          </p>
         </div>
 
         <div className="rounded-2xl border border-[#ddcab2] bg-white/55 p-4 lg:border-0 lg:bg-transparent lg:p-0">

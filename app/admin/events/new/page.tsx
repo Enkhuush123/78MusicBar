@@ -17,6 +17,8 @@ export default function AdminNewEventPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [djName, setDjName] = useState("");
+  const [djType, setDjType] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [price, setPrice] = useState<number>(0);
   const [currency, setCurrency] = useState("MNT");
@@ -65,6 +67,8 @@ export default function AdminNewEventPage() {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || null,
+          djName: djName.trim() || null,
+          djType: djType.trim() || null,
           imageUrl: imageUrl.trim() || null,
           price,
           currency,
@@ -113,6 +117,24 @@ export default function AdminNewEventPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={tr(locale, "Short description...", "Товч мэдээлэл...")}
+              />
+            </Field>
+
+            <Field label={tr(locale, "DJ name", "DJ нэр")}>
+              <input
+                className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
+                value={djName}
+                onChange={(e) => setDjName(e.target.value)}
+                placeholder={tr(locale, "DJ name...", "DJ нэр...")}
+              />
+            </Field>
+
+            <Field label={tr(locale, "DJ type", "DJ төрөл")}>
+              <input
+                className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/20 px-3 text-amber-50"
+                value={djType}
+                onChange={(e) => setDjType(e.target.value)}
+                placeholder={tr(locale, "Afro House / Techno / Hip Hop...", "Afro House / Techno / Hip Hop...")}
               />
             </Field>
 
