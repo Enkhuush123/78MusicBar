@@ -64,8 +64,7 @@ export const Footer = ({ locale }: FooterProps) => {
           </p>
           <div className="mt-3 grid gap-1 text-sm">
             <Link href="/events">{tr(locale, "Events", "Эвент")}</Link>
-            <Link href="/menu/drinks">{tr(locale, "Drinks", "Уух зүйлс")}</Link>
-            <Link href="/menu/food">{tr(locale, "Food", "Хоол")}</Link>
+            <Link href="/menu">{tr(locale, "Menu", "Меню")}</Link>
           </div>
           <div className="mt-4 flex gap-3">
             <a

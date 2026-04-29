@@ -135,6 +135,7 @@ export default function AdminMenuPage() {
   const { locale } = useLocale();
   const params = useParams<{ category: "drinks" | "food" }>();
   const category = params.category;
+  const isUnifiedMenu = category === "drinks";
 
   const [rows, setRows] = useState<Row[]>([]);
   const [specials, setSpecials] = useState<SpecialRow[]>([]);
@@ -157,31 +158,17 @@ export default function AdminMenuPage() {
 
   const load = async () => {
     setMsg(null);
-    const res = await fetch(`/api/admin/menu?category=${category}`, {
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `/api/admin/menu?category=${isUnifiedMenu ? "all" : category}`,
+      {
+        cache: "no-store",
+      },
+    );
     if (!res.ok)
       return setMsg(tr(locale, "Load failed", "Уншихад алдаа гарлаа"));
     setRows(await res.json());
 
-    if (category === "drinks") {
-      const sRes = await fetch("/api/admin/menu/drinks-specials", {
-        cache: "no-store",
-      });
-      if (!sRes.ok) {
-        setSpecials([]);
-        return setMsg(
-          tr(
-            locale,
-            "Loading specials failed",
-            "Онцлох коктейль уншихад алдаа гарлаа",
-          ),
-        );
-      }
-      setSpecials(await sRes.json());
-    } else {
-      setSpecials([]);
-    }
+    setSpecials([]);
   };
 
   useEffect(() => {
@@ -237,7 +224,11 @@ export default function AdminMenuPage() {
       const res = await fetch("/api/admin/menu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, imageUrl, sort }),
+        body: JSON.stringify({
+          category: isUnifiedMenu ? "drinks" : category,
+          imageUrl,
+          sort,
+        }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -383,8 +374,8 @@ export default function AdminMenuPage() {
             {tr(locale, "Menu Assets", "Меню файлууд")}
           </p>
           <h1 className="jazz-heading text-4xl text-amber-50">
-            {category === "drinks"
-              ? tr(locale, "Drinks Menu", "Уух зүйлсийн меню")
+            {isUnifiedMenu
+              ? tr(locale, "Menu", "Меню")
               : tr(locale, "Food Menu", "Хоолны меню")}
           </h1>
         </div>
@@ -477,158 +468,6 @@ export default function AdminMenuPage() {
           </div>
         </div>
       </div>
-
-      {category === "drinks" && (
-        <div className="mt-6 rounded-2xl border border-amber-300/25 bg-black/20 p-4">
-          <div className="flex items-end justify-between gap-2">
-            <p className="text-sm font-semibold text-amber-100">
-              {tr(locale, "Special Cocktails", "Онцлох коктейль")}
-            </p>
-          </div>
-
-          <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_240px]">
-            <div className="grid gap-3">
-              <input
-                className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
-                value={specialName}
-                onChange={(e) => setSpecialName(e.target.value)}
-                placeholder={tr(locale, "Cocktail name", "Коктейлийн нэр")}
-              />
-
-              <textarea
-                rows={3}
-                className="w-full rounded-xl border border-amber-300/30 bg-black/30 px-3 py-2 text-amber-50"
-                value={specialIngredients}
-                onChange={(e) => setSpecialIngredients(e.target.value)}
-                placeholder={tr(locale, "Ingredients", "Орц")}
-              />
-
-              <div className="grid gap-2 md:grid-cols-[1fr_120px]">
-                <div className="h-11 rounded-xl border border-amber-300/30 bg-black/30 px-3 text-sm text-amber-100/75 flex items-center">
-                  {specialImageUrl
-                    ? tr(locale, "Image ready", "Зураг бэлэн")
-                    : tr(locale, "Upload image first", "Эхлээд зураг оруулна уу")}
-                </div>
-                <button
-                  type="button"
-                  className="h-11 rounded-xl border border-amber-300/40 text-sm font-semibold text-amber-50 hover:bg-amber-300/15 transition"
-                  onClick={createSpecial}
-                  disabled={saving || uploading}
-                >
-                  {saving
-                    ? tr(locale, "Saving...", "Хадгалж байна...")
-                    : tr(locale, "Add", "Нэмэх")}
-                </button>
-              </div>
-
-              <div className="grid gap-2 md:grid-cols-[1fr_120px]">
-                <input
-                  type="number"
-                  className="h-11 w-full rounded-xl border border-amber-300/30 bg-black/30 px-3 text-amber-50"
-                  value={specialSort}
-                  onChange={(e) => setSpecialSort(Number(e.target.value))}
-                  placeholder={tr(locale, "Sort", "Дараалал")}
-                />
-                <input
-                  className="block w-full text-sm text-amber-100"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (!f) return;
-                    upload(f, (url) => setSpecialImageUrl(url));
-                    e.currentTarget.value = "";
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-amber-300/30 bg-black/20 p-3">
-              <p className="text-xs text-amber-100/70">
-                {tr(locale, "Preview", "Урьдчилан харах")}
-              </p>
-              <div className="mt-2 h-44 overflow-hidden rounded-xl bg-black/30">
-                {specialImageUrl ? (
-                  <img
-                    src={specialImageUrl}
-                    alt="special-preview"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-amber-100/70">
-                    {tr(locale, "No image", "Зураг алга")}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {specials
-              .filter((s) => s.isActive)
-              .map((s) => (
-                <div
-                  key={s.id}
-                  className="overflow-hidden rounded-2xl border border-amber-300/25 bg-black/20"
-                >
-                  <div className="h-44 w-full bg-black/30">
-                    <img
-                      src={s.imageUrl}
-                      alt={s.name}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-
-                  <div className="grid gap-2 p-3">
-                    <input
-                      className="h-10 w-full rounded-xl border border-amber-300/30 bg-black/30 px-3 text-sm text-amber-50"
-                      defaultValue={s.name}
-                      onBlur={(e) =>
-                        updateSpecial(s.id, { name: e.target.value })
-                      }
-                    />
-                    <textarea
-                      rows={2}
-                      className="w-full rounded-xl border border-amber-300/30 bg-black/30 px-3 py-2 text-sm text-amber-50"
-                      defaultValue={s.ingredients}
-                      onBlur={(e) =>
-                        updateSpecial(s.id, { ingredients: e.target.value })
-                      }
-                    />
-                    <input
-                      type="number"
-                      className="h-10 w-full rounded-xl border border-amber-300/30 bg-black/30 px-3 text-sm text-amber-50"
-                      defaultValue={s.sort}
-                      onBlur={(e) =>
-                        updateSpecial(s.id, { sort: Number(e.target.value) })
-                      }
-                    />
-                    <input
-                      className="block w-full text-xs text-amber-100/90"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (!f) return;
-                        upload(f, async (url) => {
-                          await updateSpecial(s.id, { imageUrl: url });
-                        });
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => askRemoveSpecial(s.id)}
-                      className="h-10 rounded-xl border border-amber-300/40 text-sm font-semibold text-amber-50 hover:bg-amber-300/15 transition"
-                    >
-                      {tr(locale, "Delete", "Устгах")}
-                    </button>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((r) => (

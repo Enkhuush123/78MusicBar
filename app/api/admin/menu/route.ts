@@ -6,10 +6,14 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = (searchParams.get("category") || "drinks") as
     | "drinks"
-    | "food";
+    | "food"
+    | "all";
 
   const items = await prisma.menuImage.findMany({
-    where: { category, isActive: true },
+    where:
+      category === "all"
+        ? { isActive: true }
+        : { category, isActive: true },
     orderBy: [{ sort: "asc" }, { createdAt: "desc" }],
   });
 

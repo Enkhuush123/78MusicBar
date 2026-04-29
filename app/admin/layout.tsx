@@ -17,7 +17,6 @@ export default async function AdminLayout({
   ];
   const contentLinks = [
     { href: "/admin/events", label: tr(locale, "Events", "Эвент") },
-    { href: "/admin/about", label: tr(locale, "About Us", "Бидний тухай") },
     {
       href: "/admin/collections",
       label: tr(locale, "Collections", "Collection"),
@@ -30,10 +29,9 @@ export default async function AdminLayout({
     },
     { href: "/admin/open-deck", label: tr(locale, "Open Deck", "Open Deck") },
     {
-      href: "/admin/menu/drinks",
-      label: tr(locale, "Drinks Menu", "Уух зүйлсийн меню"),
+      href: "/admin/menu",
+      label: tr(locale, "Menu", "Меню"),
     },
-    { href: "/admin/menu/food", label: tr(locale, "Food Menu", "Хоолны меню") },
   ];
 
   return (

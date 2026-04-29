@@ -73,10 +73,10 @@ export default function HomeHeroCarousel({
               {ctaText}
             </Link>
             <Link
-              href="/menu/drinks"
+              href="/menu"
               className="inline-flex w-full items-center justify-center rounded-xl border border-amber-200/80 px-5 py-2.5 text-sm font-semibold text-amber-50 hover:bg-white/10 sm:w-auto sm:px-6 sm:py-3"
             >
-              {tr(locale, "Drinks Menu", "Уух зүйлсийн меню")}
+              {tr(locale, "Menu", "Меню")}
             </Link>
           </div>
         </div>

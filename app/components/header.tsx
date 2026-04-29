@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import { Menu as MenuIcon, ChevronDown, LogOut } from "lucide-react";
+import { Menu as MenuIcon, LogOut } from "lucide-react";
 
 import { supabase as supabaseClient } from "@/lib/supabase/browser";
 import { LoginModal } from "./auth/login";
@@ -32,9 +32,9 @@ import Image from "next/image";
 const nav = [
   { en: "Home", mn: "Нүүр", href: "/" },
   { en: "Events", mn: "Эвент", href: "/events" },
+  { en: "Menu", mn: "Меню", href: "/menu" },
   { en: "Open Deck", mn: "Open Deck", href: "/open-deck" },
   { en: "Collections", mn: "Collection", href: "/collections" },
-  { en: "About", mn: "Бидний тухай", href: "/about" },
 ];
 
 function getInitial(email?: string | null) {
@@ -143,21 +143,6 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
               </Button>
             ))}
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
-                  {tr(locale, "Menu", "Меню")} <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem asChild>
-                  <Link href="/menu/drinks">{tr(locale, "Drinks", "Уух зүйлс")}</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/menu/food">{tr(locale, "Food", "Хоол")}</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </nav>
 
           <div className="hidden md:flex items-center gap-2">
@@ -259,18 +244,6 @@ export function Header({ initialLocale = "en" }: HeaderProps) {
                       <Link href={item.href}>{tr(locale, item.en, item.mn)}</Link>
                     </Button>
                   ))}
-
-                  <div className="mt-2 grid gap-2">
-                    <div className="text-xs font-semibold text-muted-foreground">
-                      {tr(locale, "Menu", "Меню")}
-                    </div>
-                    <Button asChild variant="ghost" className="justify-start">
-                      <Link href="/menu/drinks">{tr(locale, "Drinks", "Уух зүйлс")}</Link>
-                    </Button>
-                    <Button asChild variant="ghost" className="justify-start">
-                      <Link href="/menu/food">{tr(locale, "Food", "Хоол")}</Link>
-                    </Button>
-                  </div>
 
                   <div className="mt-4 grid gap-2">
                     {!loggedIn ? (

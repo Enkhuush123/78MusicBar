@@ -35,21 +35,12 @@ export default async function AdminPage() {
       ),
     },
     {
-      href: "/admin/about",
-      title: tr(locale, "About Page", "Бидний тухай"),
+      href: "/admin/menu",
+      title: tr(locale, "Menu", "Меню"),
       text: tr(
         locale,
-        "Manage text and gallery visuals.",
-        "Текст болон gallery зураг удирдах.",
-      ),
-    },
-    {
-      href: "/admin/menu/drinks",
-      title: tr(locale, "Drinks Menu", "Уух зүйлсийн меню"),
-      text: tr(
-        locale,
-        "Update drinks list and featured cocktail.",
-        " Уух зүйлсийн жагсаалт болон тусгай коктейлийг нэмэх.",
+        "Upload and manage the full menu.",
+        "Нэгдсэн менюг оруулж удирдах.",
       ),
     },
   ];
